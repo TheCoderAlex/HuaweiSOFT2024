@@ -172,9 +172,9 @@ void boatAction () {
         if (boat[i].status == 0)
             continue;
         if (boat[i].id == -1 && boat[i].status != 0) {
-            boat[i].ship(i, rand() % 10);
+            boat[i].ship(i, 2 * i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 2) {
-            boat[i].ship(i, rand() % 10);
+            boat[i].ship(i, 2 * i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 1) {
             boat[i].go(i);
         }
@@ -287,8 +287,10 @@ int main() {
             if (robot[i].status == 1 && !robot[i].has_goods) {
                 //在拿货物的路上
                 robot_move(i);
-                if (robot[i].directions.empty()) //去拿货物
+                if (robot[i].directions.empty()) {
+                    //去拿货物
                     getGoods(i);
+                } 
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
                 
