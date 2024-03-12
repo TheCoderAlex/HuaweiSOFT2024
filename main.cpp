@@ -85,6 +85,10 @@ struct Boat
     shipedFrame 表示船在第几帧进入的港口
     */
     int shipedFrame, id, status;
+    /*
+    shipedFrame 表示船在第几帧进入的港口
+    */
+    int shipedFrame, id, status;
     void ship(int shipId, int berthId) {
         printf("ship %d %d\n", shipId, berthId);
     }
@@ -164,6 +168,13 @@ int Input()
     return frame_id;
 }
 
+bool boatLastChance (int frameID, int boatID) {
+    if (boat[boatID].id != -1 && boat[boatID].status == 1) {
+        return (15000 - frameID == berth[boat[boatID].id].time);
+    }
+    return false;
+}
+
 void boatAction (int frameID) {
     /* boat.status:
         0 : moving
@@ -179,13 +190,25 @@ void boatAction (int frameID) {
             continue;
         }
 
+        // 判断是不是最后一次送货机会
+        if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
+            boat[i].go(i);
+            continue;
+        }
+
         if (boat[i].status == 0)
             continue;
         if (boat[i].id == -1 && boat[i].status != 0) {
             boat[i].ship(i, 2 * i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 2) {
             boat[i].ship(i, i + rand() % 2);
+            boat[i].ship(i, i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 1) {
+            // 理想情况下 最快的装满货时间
+            boat[i].shipedFrame = frameID;
+            if (frameID - boat[i].shipedFrame == boat_capacity / berth[boat[i].id].velocity) {
+                boat[i].go(i);
+            }
             // 理想情况下 最快的装满货时间
             boat[i].shipedFrame = frameID;
             if (frameID - boat[i].shipedFrame == boat_capacity / berth[boat[i].id].velocity) {
@@ -267,12 +290,14 @@ int main() {
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
         boatAction(frame);
+        // if (frame == 1 || frame % 500 == 0)
+        // 船的操作， 传入当前帧ID
+        boatAction(frame);
 
         //新增的货物入队
         for (int j = 0; j < k; ++j) {
             goods_queue.push(goods[j]);
         }
-        cout << "size:" << goods_queue.size() << endl; 
         for (int i = 0; i < 10; ++i) {
             //找到空闲的机器人就去分配货物
             if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0) {
@@ -300,13 +325,15 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-                const int setp = 3;
-                if (rand() % 5 == setp)
-                    changeDirection(i);
+                changeDirection(i);
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
                 //在拿货物的路上
+                if (robot[i].mbx == robot[i].x && robot[i].y == robot[i].mby) {
+                    robot[i].status = 0;
+                    robot[i].mbx = robot[i].mby = 0;
+                }
                 robot_move(i);
                 if (robot[i].directions.empty()) {
                     //去拿货物
@@ -314,28 +341,30 @@ int main() {
                 } 
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
+                if (robot[i].directions.empty()) {
+                    // int minLen = 1000000;
                 
-                int minLen = 1000000;
-                
-                vector<string> tmp;
-                //泊位选择
-                for(int j = 0; j < 10; j ++){
-                    vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
-                    if(!one.empty() && one.size() < minLen){
-                        minLen = one.size();
+                    // vector<string> tmp;
+                    // //泊位选择
+                    // for(int j = 0; j < 10; j ++){
+                    //     vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
+                    //     if(!one.empty() && one.size() < minLen){
+                    //         minLen = one.size();
                         
-                        tmp = one;
+                    //         tmp = one;
+                    //     }
+                    // }
+                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                    if (!tmp.empty()) {
+                        robot[i].directions = tmp;
+                        robot[i].mbx = berth[i].x;
+                        robot[i].mby = berth[i].y;
                     }
                 }
 
-                if (!tmp.empty()) {
-                    robot[i].directions = tmp;
-                    robot[i].mbx = berth[i].x;
-                    robot[i].mby = berth[i].y;
-                    robot_move(i);
-                    if (robot[i].directions.empty())
-                        pullGoods(i);
-                }
+                robot_move(i);
+                if (robot[i].directions.empty())
+                    pullGoods(i);
             }
         }
         puts("OK");
