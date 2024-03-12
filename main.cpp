@@ -163,6 +163,13 @@ int Input()
     return frame_id;
 }
 
+bool boatLastChance (int frameID, int boatID) {
+    if (boat[boatID].id != -1 && boat[boatID].status == 1) {
+        return (15000 - frameID == berth[boat[boatID].id].time);
+    }
+    return false;
+}
+
 void boatAction (int frameID) {
     /* boat.status:
         0 : moving
@@ -191,13 +198,6 @@ void boatAction (int frameID) {
             }
         }
     }
-}
-
-bool boatLastChance (int frameID, int boatID) {
-    if (boat[boatID].id != -1 && boat[boatID].status == 1) {
-        return (15000 - frameID == berth[boat[boatID].id].time);
-    }
-    return false;
 }
 
 void robot_move(int robot_id){
@@ -298,9 +298,7 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-                const int setp = 3;
-                if (rand() % 5 == setp)
-                    changeDirection(i);
+                changeDirection(i);
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
@@ -331,10 +329,10 @@ int main() {
                     robot[i].directions = tmp;
                     robot[i].mbx = berth[i].x;
                     robot[i].mby = berth[i].y;
-                    robot_move(i);
-                    if (robot[i].directions.empty())
-                        pullGoods(i);
                 }
+                robot_move(i);
+                if (robot[i].directions.empty())
+                    pullGoods(i);
             }
         }
         puts("OK");
