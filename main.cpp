@@ -8,6 +8,7 @@
 #include <map>
 #include <utility>
 #include <cstdlib>
+#include <list>
 
 using namespace std;
 const int M_SIZE = 200;
@@ -98,7 +99,7 @@ struct Robot
     int goods_id;
     int status; //0 free 1 work 2 collision
     int st;
-    vector<string> directions;
+    vector<string> directions; // 0 1 2 3 right left up down
 }robot[10];
 
 struct Goods
