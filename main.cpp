@@ -38,6 +38,7 @@ vector<string> BFS(int startX, int startY, int endX, int endY) {
     map<pair<int, int>, string> move;
 
     q.push({startX, startY});
+    
     visited[startX][startY] = true;
 
     while (!q.empty()) {
