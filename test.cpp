@@ -291,7 +291,19 @@ int main() {
                     getGoods(i);
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
-                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+
+                int minLen = 1000000;
+                
+                vector<string> tmp;
+                //泊位选择
+                for(int j = 0; j < 10; j ++){
+                    vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
+                    if(!one.empty() && one.size() < minLen){
+                        minLen = one.size();
+                        
+                        tmp = one;
+                    }
+                }
                 if (!tmp.empty()) {
                     robot[i].directions = tmp;
                     robot[i].mbx = berth[i].x;
