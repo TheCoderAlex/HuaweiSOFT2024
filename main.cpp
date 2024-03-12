@@ -239,7 +239,6 @@ void changeDirection(int rid) {
 
 int main() {
     Init();
-    srand((unsigned)time(NULL));
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
 
@@ -294,19 +293,20 @@ int main() {
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
                 
-                int minLen = 1000000;
+                // int minLen = 1000000;
                 
-                vector<string> tmp;
-                //泊位选择
-                for(int j = 0; j < 10; j ++){
-                    vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
-                    if(!one.empty() && one.size() < minLen){
-                        minLen = one.size();
+                // vector<string> tmp;
+                // //泊位选择
+                // for(int j = 0; j < 10; j ++){
+                //     vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
+                //     if(!one.empty() && one.size() < minLen){
+                //         minLen = one.size();
                         
-                        tmp = one;
-                    }
-                }
-
+                //         tmp = one;
+                //     }
+                // }
+                
+                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
                 if (!tmp.empty()) {
                     robot[i].directions = tmp;
                     robot[i].mbx = berth[i].x;
