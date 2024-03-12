@@ -291,7 +291,7 @@ int main() {
                     getGoods(i);
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
-                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                vector<string> tmp = BFS(robot[i].x,robot[i].y,berth[i].x,berth[i].y);
                 if (!tmp.empty()) {
                     robot[i].directions = tmp;
                     robot[i].mbx = berth[i].x;
