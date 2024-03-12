@@ -184,9 +184,9 @@ void boatAction () {
     */
     for (int i = 0; i < BOAT_SIZE; i ++) {
         if (boat[i].id == -1 && boat[i].status != 0) {
-            boat[i].ship(boat[i].id, rand() % 10);
+            boat[i].ship(i, rand() % 10);
         } else if (boat[i].id != -1 && boat[i].status == 2) {
-            boat[i].ship(boat[i].id, rand() % 10);
+            boat[i].ship(i, rand() % 10);
         } else if (boat[i].id != -1 && boat[i].status == 1) {
             boat[i].go();
         }
