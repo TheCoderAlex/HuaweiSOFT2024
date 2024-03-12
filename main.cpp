@@ -80,7 +80,10 @@ struct Berth
 
 struct Boat
 {
-    int num, id, status;
+    /*
+    shipedFrame 表示船在第几帧进入的港口
+    */
+    int shipedFrame, id, status;
     void ship(int shipId, int berthId) {
         printf("ship %d %d\n", shipId, berthId);
     }
@@ -160,7 +163,7 @@ int Input()
     return frame_id;
 }
 
-void boatAction () {
+void boatAction (int frameID) {
     /* boat.status:
         0 : moving
         1 : finishing shipping OR waiting for loading
@@ -169,16 +172,33 @@ void boatAction () {
         boat.id: id is the berth id; -1 means virtual point.
     */
     for (int i = 0; i < BOAT_SIZE; i ++) {
+        // 判断是不是最后一次送货机会
+        if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
+            boat[i].go(i);
+            continue;
+        }
+
         if (boat[i].status == 0)
             continue;
         if (boat[i].id == -1 && boat[i].status != 0) {
             boat[i].ship(i, 2 * i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 2) {
-            boat[i].ship(i, 2 * i + rand() % 2);
+            boat[i].ship(i, i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 1) {
-            boat[i].go(i);
+            // 理想情况下 最快的装满货时间
+            boat[i].shipedFrame = frameID;
+            if (frameID - boat[i].shipedFrame == boat_capacity / berth[boat[i].id].velocity) {
+                boat[i].go(i);
+            }
         }
     }
+}
+
+bool boatLastChance (int frameID, int boatID) {
+    if (boat[boatID].id != -1 && boat[boatID].status == 1) {
+        return (15000 - frameID == berth[boat[boatID].id].time);
+    }
+    return false;
 }
 
 void robot_move(int robot_id){
@@ -243,8 +263,9 @@ int main() {
         int frame_id = Input();
 
         //第一帧以及每500帧操作一下船
-        if (frame == 1 || frame % 500 == 0)
-            boatAction();
+        // if (frame == 1 || frame % 500 == 0)
+        // 船的操作， 传入当前帧ID
+        boatAction(frame);
 
         //新增的货物入队
         for (int j = 0; j < k; ++j) {
@@ -293,20 +314,19 @@ int main() {
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
                 
-                // int minLen = 1000000;
+                int minLen = 1000000;
                 
-                // vector<string> tmp;
-                // //泊位选择
-                // for(int j = 0; j < 10; j ++){
-                //     vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
-                //     if(!one.empty() && one.size() < minLen){
-                //         minLen = one.size();
+                vector<string> tmp;
+                //泊位选择
+                for(int j = 0; j < 10; j ++){
+                    vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
+                    if(!one.empty() && one.size() < minLen){
+                        minLen = one.size();
                         
-                //         tmp = one;
-                //     }
-                // }
-                
-                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                        tmp = one;
+                    }
+                }
+
                 if (!tmp.empty()) {
                     robot[i].directions = tmp;
                     robot[i].mbx = berth[i].x;
