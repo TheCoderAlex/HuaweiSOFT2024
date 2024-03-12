@@ -22,7 +22,6 @@ int money,frame_id;
 int k;
 
 // queue<pair<int, int>> goods_queue;
-FILE *p;
 
 int dx[4] = {-1, 1, 0, 0};
 int dy[4] = {0, 0, -1, 1};
@@ -124,40 +123,40 @@ priority_queue<Goods> goods_queue;
 void Init()
 {
     for(int i = 0; i < M_SIZE; i ++)
-        fscanf(p,"%s", mp[i]);
+        scanf("%s", mp[i]);
     for(int i = 0; i < B_SIZE; i ++)
     {
         int id;
-        fscanf(p,"%d", &id);
-        fscanf(p,"%d%d%d%d", &berth[id].x, &berth[id].y, &berth[id].time, &berth[id].velocity);
+        scanf("%d", &id);
+        scanf("%d%d%d%d", &berth[id].x, &berth[id].y, &berth[id].time, &berth[id].velocity);
     }
-    fscanf(p,"%d", &boat_capacity);
+    scanf("%d", &boat_capacity);
     char okk[100];
-    fscanf(p,"%s", okk);
+    scanf("%s", okk);
     printf("OK\n");
     fflush(stdout);
 }
 
 int Input()
 {
-    fscanf(p,"%d%d", &frame_id, &money);
-    fscanf(p,"%d", &k);
+    scanf("%d%d", &frame_id, &money);
+    scanf("%d", &k);
     for(int i = 0; i < k; i ++)
     {
         int x, y, val;
-        fscanf(p,"%d%d%d", &x, &y, &val);
+        scanf("%d%d%d", &x, &y, &val);
         goods[i].x = x;
         goods[i].y = y;
         goods[i].value = val;
     }
     for(int i = 0; i < 10; i ++)
     {
-        fscanf(p,"%d%d%d%d", &robot[i].has_goods, &robot[i].x, &robot[i].y, &robot[i].st);
+        scanf("%d%d%d%d", &robot[i].has_goods, &robot[i].x, &robot[i].y, &robot[i].st);
     }
     for(int i = 0; i < 5; i ++)
-        fscanf(p,"%d%d\n", &boat[i].status, &boat[i].id);
+        scanf("%d%d\n", &boat[i].status, &boat[i].id);
     char okk[100];
-    fscanf(p,"%s", okk);
+    scanf("%s", okk);
     return frame_id;
 }
 
@@ -169,17 +168,7 @@ void boatAction () {
 
         boat.id: id is the berth id; -1 means virtual point.
     */
-    for (int i = 0; i < BOAT_SIZE; i ++) {
-        if (boat[i].status == 0)
-            continue;
-        if (boat[i].id == -1 && boat[i].status != 0) {
-            boat[i].ship(i, rand() % 10);
-        } else if (boat[i].id != -1 && boat[i].status == 2) {
-            boat[i].ship(i, rand() % 10);
-        } else if (boat[i].id != -1 && boat[i].status == 1) {
-            boat[i].go();
-        }
-    }
+    
 }
 
 void robot_move(int robot_id){
@@ -239,8 +228,6 @@ void changeDirection(int rid) {
 }
 
 int main() {
-    p = fopen("log.txt","r");
-    srand((unsigned)time(NULL));
     Init();
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
