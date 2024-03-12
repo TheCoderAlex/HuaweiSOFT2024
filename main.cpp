@@ -181,12 +181,12 @@ void boatAction (int frameID) {
         if (boat[i].status == 0)
             continue;
         if (boat[i].id == -1 && boat[i].status != 0) {
-            int berthID = 2 * i + rand() % 2;
+            int berthID = 2 * i + frame_id % 2;
             boat[i].ship(i, berthID);
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
             // 理想情况下 最快的装满货时间
-            if (frameID - boat[i].shipedFrame == boat_capacity / berth[boat[i].id].velocity) {
+            if (frameID - boat[i].shipedFrame >= boat_capacity / berth[boat[i].id].velocity) {
                 boat[i].go(i);
             }
         }
