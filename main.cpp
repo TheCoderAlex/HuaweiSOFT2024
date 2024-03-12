@@ -7,6 +7,7 @@
 #include <queue>
 #include <map>
 #include <utility>
+#include <cstdlib>
 
 using namespace std;
 const int M_SIZE = 200;
@@ -18,6 +19,7 @@ char mp[M_SIZE][M_SIZE];
 int boat_capacity;
 int money,frame_id;
 int k;
+
 // queue<pair<int, int>> goods_queue;
 FILE *p;
 
@@ -46,7 +48,7 @@ vector<string> BFS(int startX, int startY, int endX, int endY) {
             vector<string> path;
             pair<int, int> cur = {endX, endY};
             while (!(cur.first == startX && cur.second == startY)) {
-                path.insert(path.begin(), move[cur]);
+                path.push_back(move[cur]);
                 cur = parent[cur];
             }
             return path;
@@ -79,15 +81,13 @@ struct Berth
 struct Boat
 {
     int num, id, status;
-
     void ship(int shipId, int berthId) {
         printf("ship %d %d\n", shipId, berthId);
     }
 
-    void go() {
-        printf("go %d\n", this->id);
+    void go(int shipID) const {
+        printf("go %d\n", shipID);
     }
-
 }boat[BOAT_SIZE];
 
 struct Robot
@@ -105,73 +105,59 @@ struct Goods
 {
     int x,y;
     int value;
-    int status;
+    bool operator<(const Goods& other) const {
+        return value < other.value;
+    }
 }goods[10];
+priority_queue<Goods> goods_queue;
+
+/*
+ * 优先队列用法
+    while (!pq.empty()) {
+        Item item = pq.top();
+        pq.pop();
+        std::cout << "Item value: " << item.value << std::endl;
+    }
+*/
 
 void Init()
 {
     for(int i = 0; i < M_SIZE; i ++)
-        fscanf(p,"%s", mp[i]);
+        scanf("%s", mp[i]);
     for(int i = 0; i < B_SIZE; i ++)
     {
         int id;
-        fscanf(p,"%d", &id);
-        fscanf(p,"%d%d%d%d", &berth[id].x, &berth[id].y, &berth[id].time, &berth[id].velocity);
+        scanf("%d", &id);
+        scanf("%d%d%d%d", &berth[id].x, &berth[id].y, &berth[id].time, &berth[id].velocity);
     }
-    fscanf(p,"%d", &boat_capacity);
+    scanf("%d", &boat_capacity);
     char okk[100];
-    fscanf(p,"%s", okk);
+    scanf("%s", okk);
     printf("OK\n");
     fflush(stdout);
 }
 
 int Input()
 {
-    fscanf(p,"%d%d", &frame_id, &money);
-    fscanf(p,"%d", &k);
+    scanf("%d%d", &frame_id, &money);
+    scanf("%d", &k);
     for(int i = 0; i < k; i ++)
     {
         int x, y, val;
-        fscanf(p,"%d%d%d", &x, &y, &val);
+        scanf("%d%d%d", &x, &y, &val);
         goods[i].x = x;
         goods[i].y = y;
         goods[i].value = val;
     }
     for(int i = 0; i < 10; i ++)
     {
-        fscanf(p,"%d%d%d%d", &robot[i].has_goods, &robot[i].x, &robot[i].y, &robot[i].st);
+        scanf("%d%d%d%d", &robot[i].has_goods, &robot[i].x, &robot[i].y, &robot[i].st);
     }
     for(int i = 0; i < 5; i ++)
-        fscanf(p,"%d%d\n", &boat[i].status, &boat[i].id);
+        scanf("%d%d\n", &boat[i].status, &boat[i].id);
     char okk[100];
-    fscanf(p,"%s", okk);
+    scanf("%s", okk);
     return frame_id;
-}
-
-
-void robot_move(int robot_id){
-
-    const char* direc = robot[robot_id].directions.front().c_str();
-
-    printf("move %d %s\n", robot_id,direc);
-
-    robot[robot_id].directions.erase(robot[robot_id].directions.begin());
-}
-
-void getGoods(int robot_id, int goods_id){
-    robot[robot_id].has_goods = true;
-    //修改goods状态
-    goods[goods_id].value = 0;
-
-    printf("get %d\n", robot_id);
-}
-
-void pullGoods(int robot_id, int goods_id){
-    robot[robot_id].has_goods = false;
-    robot[robot_id].status = 0;
-
-
-    printf("pull %d\n", robot_id);
 }
 
 void boatAction () {
@@ -183,14 +169,43 @@ void boatAction () {
         boat.id: id is the berth id; -1 means virtual point.
     */
     for (int i = 0; i < BOAT_SIZE; i ++) {
+        if (boat[i].status == 0)
+            continue;
         if (boat[i].id == -1 && boat[i].status != 0) {
             boat[i].ship(i, rand() % 10);
         } else if (boat[i].id != -1 && boat[i].status == 2) {
             boat[i].ship(i, rand() % 10);
         } else if (boat[i].id != -1 && boat[i].status == 1) {
-            boat[i].go();
+            boat[i].go(i);
         }
     }
+}
+
+void robot_move(int robot_id){
+    if (!robot[robot_id].directions.empty()){
+        const char* direc = robot[robot_id].directions.back().c_str();
+        printf("move %d %s\n", robot_id,direc);
+        robot[robot_id].directions.pop_back();
+    } else {
+        if (robot[robot_id].x != robot[robot_id].mbx || robot[robot_id].y != robot[robot_id].mby) {
+            robot[robot_id].status = 0;
+            return;
+        }
+    }
+    return;
+}
+
+void getGoods(int robot_id){
+    //[robot_id].has_goods = true;
+    //修改goods状态
+    //goods[goods_id].value = 0;
+    printf("get %d\n", robot_id);
+}
+
+void pullGoods(int robot_id){
+    robot[robot_id].status = 0;
+
+    printf("pull %d\n", robot_id);
 }
 
 int main() {
@@ -198,53 +213,61 @@ int main() {
     Init();
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
-        for(int i = 0; i < B_SIZE; i ++){
-            if(robot[i].status == 0){ //空闲
-                int minGoods = -1;
-                int minLen = 65535;
-                //遍历查找最近的货物点
-                for(int j = 0; j < k ; j ++){
-                    if (goods[j].status == 1)
-                        continue;
-                    vector<string> oneGoods = BFS(robot[i].x, robot[i].y, goods[j].x, goods[j].y);
-                    if(oneGoods.size() != 0 && oneGoods.size() < minLen){
-                        minLen = oneGoods.size();
-                        robot[i].directions = oneGoods;
-                        minGoods = j;
-                    }
+
+        //第一帧以及每500帧操作一下船
+        if (frame == 1 || frame % 500 == 0)
+            boatAction();
+
+        //新增的货物入队
+        for (int j = 0; j < k; ++j) {
+            goods_queue.push(goods[j]);
+        }
+        cout << "size:" << goods_queue.size() << endl; 
+        for (int i = 0; i < 10; ++i) {
+            //找到空闲的机器人就去分配货物
+            if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0) {
+                Goods tmp = goods_queue.top();
+                goods_queue.pop();
+                vector<string> g = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
+                if (!g.empty()) {
+                    robot[i].mbx = tmp.x;
+                    robot[i].mby = tmp.y;
+                    robot[i].directions = g;
+                    robot[i].status = 1;
                 }
-                if (minGoods != -1){
-                    goods[minGoods].status = 1;
-                    //cout << i << " pick " << minGoods << endl;
+            }
+        }
+
+        //机器人根据状态进行移动
+        for (int i = 0;i < 10; ++i) {
+            //如果没带货物碰撞
+            if (robot[i].st == 0 && !robot[i].has_goods) {
+                robot[i].status = 0;
+                robot[i].directions = {};
+                robot[i].mbx = robot[i].mby = 0;
+                continue;
+            }
+
+            if (robot[i].status == 1 && !robot[i].has_goods) {
+                //在拿货物的路上
+                robot_move(i);
+                if (robot[i].directions.empty()) //去拿货物
+                    getGoods(i);
+            } else if (robot[i].status == 1 && robot[i].has_goods) {
+                //拿到货物去泊位
+                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                if (!tmp.empty()) {
+                    robot[i].directions = tmp;
+                    robot[i].mbx = berth[i].x;
+                    robot[i].mby = berth[i].y;
                 }
-
-                if (robot[i].directions.size() == 0){
-                    continue;
-                }
-
-                //修改机器人状态为工作中
-                robot[i].status = 1;
-                //修改机器人目的货物
-                robot[i].goods_id = minGoods;
-
                 robot_move(i);
-
-                if(robot[i].directions.size() == 0) getGoods(i, robot[i].goods_id);
-
-            }else if (robot[i].status == 1 && !robot[i].has_goods) //去拿货物的路上
-            {
-                robot_move(i);
-                if(robot[i].directions.size() == 0) getGoods(i, robot[i].goods_id);
-            }else if (robot[i].status == 1 && robot[i].has_goods) //拿到货物
-            {
-                robot[i].directions = BFS(robot[i].x, robot[i].y,berth[1].x,berth[1].y);
-                robot_move(i);
-                if(robot[i].directions.size() == 0) pullGoods(i, robot[i].goods_id);
+                if (robot[i].directions.empty())
+                    pullGoods(i);
             }
         }
         puts("OK");
         fflush(stdout);
-
     }
     return 0;
 }
