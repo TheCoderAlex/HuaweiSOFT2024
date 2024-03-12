@@ -6,9 +6,9 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <ctime>
 #include <utility>
 #include <cstdlib>
-#include <list>
 
 using namespace std;
 const int M_SIZE = 200;
@@ -22,7 +22,6 @@ int money,frame_id;
 int k;
 
 // queue<pair<int, int>> goods_queue;
-FILE *p;
 
 int dx[4] = {-1, 1, 0, 0};
 int dy[4] = {0, 0, -1, 1};
@@ -99,7 +98,7 @@ struct Robot
     int goods_id;
     int status; //0 free 1 work 2 collision
     int st;
-    vector<string> directions; // 0 1 2 3 right left up down
+    vector<string> directions;
 }robot[10];
 
 struct Goods
@@ -209,9 +208,38 @@ void pullGoods(int robot_id){
     printf("pull %d\n", robot_id);
 }
 
+void changeDirection(int rid) {
+    string tmp = robot[rid].directions.back();
+    
+    //如果剩下三个个方向全是墙就不改变方向
+    int i;
+    for (i = 0;i < 4; ++i) {
+        if (dir[i] == tmp)  continue;
+        if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
+            break;
+    }
+    if (i == 4) return;
+
+    //随机选择一个可以走的位置
+    int c,x,y,newx,newy;
+    do {
+        c = rand() % 4;
+        x = dx[c], y = dy[c];
+        newx = robot[rid].x + x, newy = robot[rid].y + y;
+    } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+
+    //更新路径
+    vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
+    if (!t.empty()) {
+        //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
+        robot[rid].directions = t;
+        robot[rid].directions.push_back(dir[c]);
+    }
+}
+
 int main() {
-    p = fopen(R"(C:\Users\alextang\CLionProjects\Huawei\log.txt)","r");
     Init();
+    srand((unsigned)time(NULL));
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
 
@@ -249,6 +277,13 @@ int main() {
                 continue;
             }
 
+            //带着货物碰撞
+            if (robot[i].st == 0 && robot[i].has_goods) {
+                const int setp = 3;
+                if (rand() % 5 == setp)
+                    changeDirection(i);
+            }
+
             if (robot[i].status == 1 && !robot[i].has_goods) {
                 //在拿货物的路上
                 robot_move(i);
@@ -256,15 +291,28 @@ int main() {
                     getGoods(i);
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
-                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                
+                int minLen = 1000000;
+                
+                vector<string> tmp;
+                //泊位选择
+                for(int j = 0; j < 10; j ++){
+                    vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
+                    if(!one.empty() && one.size() < minLen){
+                        minLen = one.size();
+                        
+                        tmp = one;
+                    }
+                }
+
                 if (!tmp.empty()) {
                     robot[i].directions = tmp;
                     robot[i].mbx = berth[i].x;
                     robot[i].mby = berth[i].y;
+                    robot_move(i);
+                    if (robot[i].directions.empty())
+                        pullGoods(i);
                 }
-                robot_move(i);
-                if (robot[i].directions.empty())
-                    pullGoods(i);
             }
         }
         puts("OK");
