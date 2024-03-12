@@ -298,9 +298,7 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-                const int setp = 3;
-                if (rand() % 5 == setp)
-                    changeDirection(i);
+                changeDirection(i);
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
@@ -336,7 +334,7 @@ int main() {
                         robot[i].mby = berth[i].y;
                     }
                 }
-                
+
                 robot_move(i);
                 if (robot[i].directions.empty())
                     pullGoods(i);
