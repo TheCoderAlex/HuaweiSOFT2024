@@ -4,6 +4,22 @@
         "vector": "cpp",
         "array": "cpp",
         "string_view": "cpp",
-        "regex": "cpp"
+        "regex": "cpp",
+        "__mutex_base": "cpp",
+        "chrono": "cpp",
+        "ratio": "cpp",
+        "cstdlib": "cpp",
+        "filesystem": "cpp",
+        "variant": "cpp",
+        "__config": "cpp",
+        "__locale": "cpp",
+        "__threading_support": "cpp",
+        "cstring": "cpp",
+        "locale": "cpp",
+        "thread": "cpp",
+        "complex": "cpp",
+        "__bit_reference": "cpp",
+        "__split_buffer": "cpp",
+        "string": "cpp"
     }
 }

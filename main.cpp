@@ -38,6 +38,7 @@ vector<string> BFS(int startX, int startY, int endX, int endY) {
     map<pair<int, int>, string> move;
 
     q.push({startX, startY});
+    
     visited[startX][startY] = true;
 
     while (!q.empty()) {
@@ -80,6 +81,10 @@ struct Berth
 
 struct Boat
 {
+    /*
+    shipedFrame 表示船在第几帧进入的港口
+    */
+    int shipedFrame, id, status;
     /*
     shipedFrame 表示船在第几帧进入的港口
     */
@@ -185,11 +190,18 @@ void boatAction (int frameID) {
             continue;
         }
 
+        // 判断是不是最后一次送货机会
+        if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
+            boat[i].go(i);
+            continue;
+        }
+
         if (boat[i].status == 0)
             continue;
         if (boat[i].id == -1 && boat[i].status != 0) {
             boat[i].ship(i, 2 * i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 2) {
+            boat[i].ship(i, i + rand() % 2);
             boat[i].ship(i, i + rand() % 2);
         } else if (boat[i].id != -1 && boat[i].status == 1) {
             // 理想情况下 最快的装满货时间
@@ -197,8 +209,20 @@ void boatAction (int frameID) {
             if (frameID - boat[i].shipedFrame == boat_capacity / berth[boat[i].id].velocity) {
                 boat[i].go(i);
             }
+            // 理想情况下 最快的装满货时间
+            boat[i].shipedFrame = frameID;
+            if (frameID - boat[i].shipedFrame == boat_capacity / berth[boat[i].id].velocity) {
+                boat[i].go(i);
+            }
         }
     }
+}
+
+bool boatLastChance (int frameID, int boatID) {
+    if (boat[boatID].id != -1 && boat[boatID].status == 1) {
+        return (15000 - frameID == berth[boat[boatID].id].time);
+    }
+    return false;
 }
 
 void robot_move(int robot_id){
@@ -263,6 +287,9 @@ int main() {
         int frame_id = Input();
 
         //第一帧以及每500帧操作一下船
+        // if (frame == 1 || frame % 500 == 0)
+        // 船的操作， 传入当前帧ID
+        boatAction(frame);
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
         boatAction(frame);
