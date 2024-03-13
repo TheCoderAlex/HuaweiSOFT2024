@@ -103,7 +103,6 @@ struct Robot
     int berth_id;
     int status; //0 free 1 work 2 collision
     int st;
-    stack<int> re;
     vector<string> directions;
     Robot(){
         status = 2;
@@ -225,10 +224,21 @@ void Init()
             for (; end != -1; end = pre[end]) {
                 path.push_back(end);
             }
+            path.pop_back();
             reverse(path.begin(), path.end());
         }
     }
 
+    //test path
+    // cout << "The 1 berth.\n" << xy2pos({berth[1].x,berth[1].y});
+    // for (int i = 0;i < maxn; ++i) {
+    //     if (minlen[1][i] == INF)    continue;
+    //     cout << "The path to point " << i << " :";
+    //     for (auto &p : pathto[1][i]) {
+    //         cout << p << " ";
+    //     }
+    //     cout << endl;
+    // }
 
     //定好每个robot选择哪个港口
     int choice[10] = {0,1,2,3,4,5,6,7,8,9};
@@ -323,16 +333,25 @@ void move(int rid, int nxt, int pos) {
 }
 
 void robot_move(int robot_id, int d){
+    //d = 0朝泊位移动
+    //d = 1朝货物移动
+    
     if (d == 0) {
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
         int p = berthPre[robot[robot_id].berth_id][now];
         move(robot_id, p, now);
-        robot[robot_id].re.push(p);
     } else {
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
-        int p = robot[robot_id].re.top();
+        int target = xy2pos({robot[robot_id].mbx,robot[robot_id].mby});
+        int p;
+        int i;
+        for (i = 0;i < pathto[robot[robot_id].berth_id][target].size(); ++i) {
+            if (pathto[robot[robot_id].berth_id][target][i] == now) {
+                p = pathto[robot[robot_id].berth_id][target][i+1];
+                break;
+            }
+        }
         move(robot_id, p, now);
-        robot[robot_id].re.pop();
     }
 }
 
@@ -389,12 +408,58 @@ int main() {
         // 船的操作， 传入当前帧ID
         boatAction(frame);
         
+        //新增的货物入队
+        for (int j = 0; j < k; ++j) {
+            goods_queue.push(goods[j]);
+        }
+
         //初始状态全部滚去港口
-        // for (int i = 0;i < 10; i++) {
-        //     if (robot[i].status == 2) {
-        //         robot_move(i);
-        //     }
-        // }
+        for (int i = 0;i < 10; ++i) {
+            if (robot[i].status == 2 && robot[i].st != 0) {
+                robot_move(i ,0);
+            }
+            if (robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby) {
+                robot[i].status = 0;
+            } 
+        }
+
+        //分货
+        for (int i = 0; i < 10; ++i) {
+            //找到空闲的机器人就去分配货物
+            if (robot[i].status == 0 && robot[i].st != 0) {
+                Goods tmp = goods_queue.top();
+                goods_queue.pop();
+                //转为一维坐标
+                int pos = xy2pos({tmp.x,tmp.y});
+                // 如果货物可达，设置为机器人的目标
+                if (minlen[robot[i].berth_id][pos] != INF) {
+                    robot[i].mbx = tmp.x;
+                    robot[i].mby = tmp.y;
+                    robot[i].status = 1;
+                }
+            }
+        }
+
+        //机器人根据状态进行移动
+        for (int i = 0;i < 10; ++i) {
+            //如果没带货物碰撞
+            if (robot[i].st == 0 && !robot[i].has_goods) {
+                robot[i].status = 0;
+                continue;
+            }
+
+            //去泊位的情况发生碰撞
+
+
+            
+            //在拿货物的路上
+               
+
+            
+            //拿到货物去泊位
+
+
+        }
 
         
         puts("OK");
