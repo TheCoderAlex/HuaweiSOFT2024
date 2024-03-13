@@ -335,7 +335,7 @@ void move(int rid, int nxt, int pos) {
 void robot_move(int robot_id, int d){
     //d = 0朝泊位移动
     //d = 1朝货物移动
-    
+
     if (d == 0) {
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
         int p = berthPre[robot[robot_id].berth_id][now];
@@ -343,6 +343,11 @@ void robot_move(int robot_id, int d){
     } else {
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
         int target = xy2pos({robot[robot_id].mbx,robot[robot_id].mby});
+
+        //如果不可达直接返回
+        if(pathto[robot[robot_id].berth_id][target].empty())
+            return;
+        
         int p;
         int i;
         for (i = 0;i < pathto[robot[robot_id].berth_id][target].size(); ++i) {
