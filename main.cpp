@@ -224,29 +224,8 @@ void getGoods(int robot_id){
     printf("get %d\n", robot_id);
 }
 
-/*
-还是想去近一点的港口
-*/
-int choseClosestBerth (int robotID) {
-    int berthID = 0;
-    int min = robot[robotID].x + robot[robotID].y - berth[0].x - berth[0].y;
-    for (int j = 1; j < 10; j++) {
-        if (berth[j].flag)
-        {
-            if (min > robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y)
-            {
-                min = robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y;
-                berthID = j;
-            }
-        }
-    }
-    berth[berthID].flag = false;
-    return berthID;
-}
-
 void pullGoods(int robot_id){
     robot[robot_id].status = 0;
-    berth[choseClosestBerth(robot_id)].flag = true;
 
     printf("pull %d\n", robot_id);
 }
@@ -344,9 +323,7 @@ int main() {
                 } 
             } else if (robot[i].status == 1 && robot[i].has_goods) {
                 //拿到货物去泊位
-                
                 // int minLen = 1000000;
-                
                 // vector<string> tmp;
                 // //泊位选择
                 // for(int j = 0; j < 10; j ++){
@@ -359,12 +336,11 @@ int main() {
                 // }
                 
                 if (robot[i].directions.empty()) {
-                    int berthID = choseClosestBerth(i);
-                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[berthID].x,berth[berthID].y);
+                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
                     if (!tmp.empty()) {
                         robot[i].directions = tmp;
-                        robot[i].mbx = berth[berthID].x;
-                        robot[i].mby = berth[berthID].y;
+                        robot[i].mbx = berth[i].x;
+                        robot[i].mby = berth[i].y;
                     }
                 }
             

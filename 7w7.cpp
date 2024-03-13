@@ -75,10 +75,6 @@ struct Berth
     int x,y;
     int time;
     int velocity;
-    bool flag;
-    Berth () {
-        flag = true;
-    }
 }berth[B_SIZE];
 
 struct Boat
@@ -203,26 +199,6 @@ void boatAction (int frameID) {
     }
 }
 
-/*
-还是想去近一点的港口
-*/
-int choseClosestBerth (int robotID) {
-    int berthID = 0;
-    int min = robot[robotID].x + robot[robotID].y - berth[0].x - berth[0].y;
-    for (int j = 1; j < 10; j++) {
-        if (berth[j].flag)
-        {
-            if (min > robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y)
-            {
-                min = robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y;
-                berthID = j;
-            }
-        }
-    }
-    berth[berthID].flag = false;
-    return berthID;
-}
-
 void robot_move(int robot_id){
     if (!robot[robot_id].directions.empty()){
         const char* direc = robot[robot_id].directions.back().c_str();
@@ -246,7 +222,6 @@ void getGoods(int robot_id){
 
 void pullGoods(int robot_id){
     robot[robot_id].status = 0;
-    berth[choseClosestBerth(robot_id)].flag = true;
     printf("pull %d\n", robot_id);
 }
 
@@ -346,8 +321,7 @@ int main() {
                 //         tmp = one;
                 //     }
                 // }
-                int berthID = choseClosestBerth(i);
-                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[berthID].x,berth[berthID].y);
+                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
 
                 if (!tmp.empty()) {
                     robot[i].directions = tmp;
