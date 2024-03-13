@@ -28,6 +28,7 @@ int k;
 int dx[4] = {-1, 1, 0, 0};
 int dy[4] = {0, 0, -1, 1};
 string dir[4] = {"2", "3", "1", "0"};
+int has_cracked[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
 bool isValid(int x, int y) {
     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
@@ -450,19 +451,43 @@ int main() {
             //如果没带货物碰撞
             if (robot[i].st == 0 && !robot[i].has_goods) {
                 robot[i].status = 0;
+                has_cracked[i] = 1;
                 continue;
             }
 
-            //去泊位的情况发生碰撞
+            if (robot[i].st == 0 && robot[i].has_goods)
+                has_cracked[i] = 1;
 
+            if(robot[i].status == 1 && !robot[i].has_goods) {//在拿货物的路上
+                //刚才发生了碰撞
+                if(has_cracked[i] == 1){
+                    int c, x, y, newx, newy;
+                    do{
+                        c = rand() % 4;
+                        x = dx[c], y = dx[c];
+                        newx = robot[i].x + x, newy = robot[i].y + y;
+                    }while(mp[newx][newy] != '#' && mp[newx][newy] != '*');
 
-            
-            //在拿货物的路上
-               
+                    move(i, xy2pos({newx, newy}), xy2pos({robot[i].x, robot[i].y}));
+                    has_cracked[i] = 0;
+                }else{
+                    //还没有判断原地get的情况
 
-            
-            //拿到货物去泊位
+                    robot_move(i, 1);
+                }
+                
+                //点位重合则get
+                if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby)
+                    getGoods(i);
+                
+            }else if(robot[i].status == 1 && robot[i].has_goods){//拿到货物去泊位
 
+                robot_move(i, 0);
+
+                if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby)
+                    pullGoods(i);
+                
+            }
 
         }
 
