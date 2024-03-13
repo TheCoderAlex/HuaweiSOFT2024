@@ -193,7 +193,7 @@ void boatAction (int frameID) {
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
             // 理想情况下 最快的装满货时间
-            if (frameID - boat[i].shipedFrame >= boat_capacity / berth[boat[i].id].velocity) {
+            if (frameID - boat[i].shipedFrame >= boat_capacity * 1.5 / berth[boat[i].id].velocity) {
                 boat[i].go(i);
             }
         }
@@ -227,7 +227,7 @@ void pullGoods(int robot_id){
     printf("pull %d\n", robot_id);
 }
 
-void changeDirection(int rid) {
+void changeDirection(int rid, int frame) {
     string tmp = robot[rid].directions.back();
     
     //如果剩下三个个方向全是墙就不改变方向
@@ -239,6 +239,11 @@ void changeDirection(int rid) {
     }
     if (i == 4) return;
 
+    if (frame % 20 == 0) {
+        robot[rid].mbx = berth[rand() % 10].x;
+        robot[rid].mby = berth[rand() % 10].y;
+    }
+    
     //随机选择一个可以走的位置
     int c,x,y,newx,newy;
     do {
@@ -249,11 +254,12 @@ void changeDirection(int rid) {
 
     //更新路径
     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
-    if (!t.empty()) {
+    // if (!t.empty()) {
         //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
-        robot[rid].directions = t;
+    robot[rid].directions = t;
+    if (!t.empty())
         robot[rid].directions.push_back(dir[c]);
-    }
+    // }
 }
 
 int main() {
@@ -271,9 +277,9 @@ int main() {
             goods_queue.push(goods[j]);
         }
         
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 10; ++i) {            
             //找到空闲的机器人就去分配货物
-            if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0) {
+            if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
                 Goods tmp = goods_queue.top();
                 goods_queue.pop();
                 vector<string> g = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
@@ -283,6 +289,8 @@ int main() {
                     robot[i].directions = g;
                     robot[i].status = 1;
                 }
+            } else if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
+                robot[i].status = 1;
             }
         }
 
@@ -298,7 +306,7 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-                changeDirection(i);
+                changeDirection(i, frame_id);
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
@@ -328,6 +336,7 @@ int main() {
                 //         tmp = one;
                 //     }
                 // }
+                
                 if (robot[i].directions.empty()) {
                     vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
                     if (!tmp.empty()) {
