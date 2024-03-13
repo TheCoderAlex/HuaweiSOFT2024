@@ -23,9 +23,9 @@ int k;
 
 // queue<pair<int, int>> goods_queue;
 
-int dx[4] = {-1, 1, 0, 0};
-int dy[4] = {0, 0, -1, 1};
-string dir[4] = {"2", "3", "1", "0"};
+int dx[4] = {0, 1, -1, 0};
+int dy[4] = {-1, 0, 0, 1};
+string dir[4] = {"1", "3", "2", "0"};
 
 bool isValid(int x, int y) {
     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
@@ -262,6 +262,22 @@ void changeDirection(int rid, int frame) {
     // }
 }
 
+/*
+还是想去近一点的港口
+*/
+int choseClosestBerth (int robotID) {
+    int berthID = 0;
+    int min = robot[robotID].x + robot[robotID].y - berth[0].x - berth[0].y;
+    for (int j = 1; j < 10; j++) {
+        if (min < robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y)
+        {
+            min = robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y;
+            berthID = j;
+        }
+    }
+    return berthID;
+}
+
 int main() {
     Init();
     for(int frame = 1; frame <=15000; frame ++){
@@ -281,14 +297,11 @@ int main() {
             //找到空闲的机器人就去分配货物
             if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
                 Goods tmp = goods_queue.top();
+                robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
+                robot[i].mbx = tmp.x;
+                robot[i].mby = tmp.y;
+                robot[i].status = 1;
                 goods_queue.pop();
-                vector<string> g = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-                if (!g.empty()) {
-                    robot[i].mbx = tmp.x;
-                    robot[i].mby = tmp.y;
-                    robot[i].directions = g;
-                    robot[i].status = 1;
-                }
             } else if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }
@@ -338,11 +351,12 @@ int main() {
                 // }
                 
                 if (robot[i].directions.empty()) {
-                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                    int berthID = choseClosestBerth(i);
+                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[berthID].x,berth[berthID].y);
                     if (!tmp.empty()) {
                         robot[i].directions = tmp;
-                        robot[i].mbx = berth[i].x;
-                        robot[i].mby = berth[i].y;
+                        robot[i].mbx = berth[berthID].x;
+                        robot[i].mby = berth[berthID].y;
                     }
                 }
             
