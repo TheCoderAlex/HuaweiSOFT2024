@@ -218,14 +218,13 @@ void Init()
         int pos = berth[i].x * N + berth[i].y;
         dijkstra(pos);
         minlen[i] = dist;
-        //berthPre[i] = pre;
+        berthPre[i] = pre;
         for (int j = 0;j < maxn; ++j) {
             vector<int>& path = pathto[i][j];
             int end = j;
             for (; end != -1; end = pre[end]) {
                 path.push_back(end);
             }
-            path.pop_back();
             reverse(path.begin(), path.end());
         }
     }
@@ -317,6 +316,7 @@ void boatAction (int frameID) {
 }
 
 void move(int rid, int nxt, int pos) {
+    //cout << "nxt " << nxt << " pos " << pos << endl;
     if (nxt - pos == 1){
         printf("move %d 0\n",rid);
     } //向右
@@ -340,15 +340,18 @@ void robot_move(int robot_id, int d){
     if (d == 0) {
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
         int p = berthPre[robot[robot_id].berth_id][now];
+        if (p == -1)
+            return;
         move(robot_id, p, now);
     } else {
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
         int target = xy2pos({robot[robot_id].mbx,robot[robot_id].mby});
 
         //如果不可达直接返回
-        if(pathto[robot[robot_id].berth_id][target].empty())
+        if(pathto[robot[robot_id].berth_id][target].size() == 1)
             return;
         
+        //cout << robot_id << " move to target " << target << " now in " << now;
         int p;
         int i;
         for (i = 0;i < pathto[robot[robot_id].berth_id][target].size(); ++i) {
@@ -357,6 +360,7 @@ void robot_move(int robot_id, int d){
                 break;
             }
         }
+        //cout << " it want to move to " << p << endl;
         move(robot_id, p, now);
     }
 }
@@ -413,7 +417,7 @@ int main() {
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
         boatAction(frame);
-        
+
         //新增的货物入队
         for (int j = 0; j < k; ++j) {
             goods_queue.push(goods[j]);
@@ -451,7 +455,7 @@ int main() {
             //如果没带货物碰撞
             if (robot[i].st == 0 && !robot[i].has_goods) {
                 robot[i].status = 0;
-                has_cracked[i] = 1;
+                // has_cracked[i] = 1;
                 continue;
             }
 
@@ -460,6 +464,13 @@ int main() {
 
             if(robot[i].status == 1 && !robot[i].has_goods) {//在拿货物的路上
                 //刚才发生了碰撞
+                //cout  << "move: " << i << ' ' << robot[i].x << ' ' << robot[i].y << endl;
+                robot_move(i, 1);
+                //点位重合则get
+                //cout << robot[i].x << " " << robot[i].y << " " << robot[i].mbx << ' ' << robot[i].mby << endl;
+                if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby)
+                    getGoods(i);
+            }else if(robot[i].status == 1 && robot[i].has_goods){//拿到货物去泊位
                 if(has_cracked[i] == 1){
                     int c, x, y, newx, newy;
                     do{
@@ -467,31 +478,15 @@ int main() {
                         x = dx[c], y = dx[c];
                         newx = robot[i].x + x, newy = robot[i].y + y;
                     }while(mp[newx][newy] != '#' && mp[newx][newy] != '*');
-
                     move(i, xy2pos({newx, newy}), xy2pos({robot[i].x, robot[i].y}));
                     has_cracked[i] = 0;
-                }else{
-                    //还没有判断原地get的情况
-
-                    robot_move(i, 1);
+                } else {
+                    robot_move(i, 0);
                 }
-                
-                //点位重合则get
-                if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby)
-                    getGoods(i);
-                
-            }else if(robot[i].status == 1 && robot[i].has_goods){//拿到货物去泊位
-
-                robot_move(i, 0);
-
                 if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby)
                     pullGoods(i);
-                
             }
-
         }
-
-        
         puts("OK");
         fflush(stdout);
     }

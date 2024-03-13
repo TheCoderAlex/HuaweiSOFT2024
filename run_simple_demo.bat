@@ -1,1 +1,1 @@
-.\PreliminaryJudge.exe -l DBG -d log.txt -m maps\map1.txt .\Demo\main.exe
+.\PreliminaryJudge.exe -l DBG -d log.txt -m maps\map-3.13.txt .\Demo\main.exe

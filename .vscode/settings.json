@@ -28,6 +28,7 @@
         "*.tcc": "cpp",
         "fstream": "cpp",
         "sstream": "cpp",
-        "iosfwd": "cpp"
+        "iosfwd": "cpp",
+        "functional": "cpp"
     }
 }
