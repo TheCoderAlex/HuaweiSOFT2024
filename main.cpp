@@ -75,7 +75,10 @@ struct Berth
     int x,y;
     int time;
     int velocity;
-
+    bool flag;
+    Berth () {
+        flag = true;
+    }
 }berth[B_SIZE];
 
 struct Boat
@@ -221,8 +224,29 @@ void getGoods(int robot_id){
     printf("get %d\n", robot_id);
 }
 
+/*
+还是想去近一点的港口
+*/
+int choseClosestBerth (int robotID) {
+    int berthID = 0;
+    int min = robot[robotID].x + robot[robotID].y - berth[0].x - berth[0].y;
+    for (int j = 1; j < 10; j++) {
+        if (berth[j].flag)
+        {
+            if (min > robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y)
+            {
+                min = robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y;
+                berthID = j;
+            }
+        }
+    }
+    berth[berthID].flag = false;
+    return berthID;
+}
+
 void pullGoods(int robot_id){
     robot[robot_id].status = 0;
+    berth[choseClosestBerth(robot_id)].flag = true;
 
     printf("pull %d\n", robot_id);
 }
@@ -260,22 +284,6 @@ void changeDirection(int rid, int frame) {
     if (!t.empty())
         robot[rid].directions.push_back(dir[c]);
     // }
-}
-
-/*
-还是想去近一点的港口
-*/
-int choseClosestBerth (int robotID) {
-    int berthID = 0;
-    int min = robot[robotID].x + robot[robotID].y - berth[0].x - berth[0].y;
-    for (int j = 1; j < 10; j++) {
-        if (min < robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y)
-        {
-            min = robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y;
-            berthID = j;
-        }
-    }
-    return berthID;
 }
 
 int main() {
@@ -361,8 +369,9 @@ int main() {
                 }
             
                 robot_move(i);
-                if (robot[i].directions.empty())
+                if (robot[i].directions.empty()) {
                     pullGoods(i);
+                }
             }
         }
         puts("OK");
