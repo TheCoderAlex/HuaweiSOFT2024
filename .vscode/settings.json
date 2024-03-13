@@ -20,6 +20,14 @@
         "complex": "cpp",
         "__bit_reference": "cpp",
         "__split_buffer": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "cstdio": "cpp",
+        "queue": "cpp",
+        "ostream": "cpp",
+        "algorithm": "cpp",
+        "*.tcc": "cpp",
+        "fstream": "cpp",
+        "sstream": "cpp",
+        "iosfwd": "cpp"
     }
 }
