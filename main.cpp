@@ -32,9 +32,9 @@ bool isValid(int x, int y) {
 }
 
 vector<string> BFS(int startX, int startY, int endX, int endY) {
-    queue<pair<int, int>> q;
-    vector<vector<bool>> visited(M_SIZE, vector<bool>(M_SIZE, false));
-    map<pair<int, int>, pair<int, int>> parent;
+    queue<pair<int, int> > q;
+    vector<vector<bool> > visited(M_SIZE, vector<bool>(M_SIZE, false));
+    map<pair<int, int>, pair<int, int> > parent;
     map<pair<int, int>, string> move;
 
     q.push({startX, startY});
@@ -188,7 +188,7 @@ void boatAction (int frameID) {
         if (boat[i].status == 0)
             continue;
         if (boat[i].id == -1 && boat[i].status != 0) {
-            int berthID = 2 * i + frame_id % 2;
+            int berthID = 2 * i + rand() % 2;
             boat[i].ship(i, berthID);
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
@@ -303,6 +303,11 @@ int main() {
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
                 //在拿货物的路上
+                if (robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby) {
+                    robot[i].status = 0;
+                    robot[i].mbx = robot[i].mby = 0;
+                }
+                
                 robot_move(i);
                 if (robot[i].directions.empty()) {
                     //去拿货物
@@ -323,13 +328,15 @@ int main() {
                 //         tmp = one;
                 //     }
                 // }
-                vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
-
-                if (!tmp.empty()) {
-                    robot[i].directions = tmp;
-                    robot[i].mbx = berth[i].x;
-                    robot[i].mby = berth[i].y;
+                if (robot[i].directions.empty()) {
+                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                    if (!tmp.empty()) {
+                        robot[i].directions = tmp;
+                        robot[i].mbx = berth[i].x;
+                        robot[i].mby = berth[i].y;
+                    }
                 }
+            
                 robot_move(i);
                 if (robot[i].directions.empty())
                     pullGoods(i);
