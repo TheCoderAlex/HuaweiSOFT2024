@@ -23,9 +23,9 @@ int k;
 
 // queue<pair<int, int>> goods_queue;
 
-int dx[4] = {-1, 1, 0, 0};
-int dy[4] = {0, 0, -1, 1};
-string dir[4] = {"2", "3", "1", "0"};
+int dx[4] = {0, 1, -1, 0};
+int dy[4] = {-1, 0, 0, 1};
+string dir[4] = {"1", "3", "2", "0"};
 
 bool isValid(int x, int y) {
     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
@@ -193,7 +193,7 @@ void boatAction (int frameID) {
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
             // 理想情况下 最快的装满货时间
-            if (frameID - boat[i].shipedFrame >= boat_capacity / berth[boat[i].id].velocity) {
+            if (frameID - boat[i].shipedFrame >= boat_capacity * 1.5 / berth[boat[i].id].velocity) {
                 boat[i].go(i);
             }
         }
@@ -227,7 +227,7 @@ void pullGoods(int robot_id){
     printf("pull %d\n", robot_id);
 }
 
-void changeDirection(int rid) {
+void changeDirection(int rid, int frame) {
     string tmp = robot[rid].directions.back();
     
     //如果剩下三个个方向全是墙就不改变方向
@@ -239,6 +239,11 @@ void changeDirection(int rid) {
     }
     if (i == 4) return;
 
+    if (frame % 20 == 0) {
+        robot[rid].mbx = berth[rand() % 10].x;
+        robot[rid].mby = berth[rand() % 10].y;
+    }
+    
     //随机选择一个可以走的位置
     int c,x,y,newx,newy;
     do {
@@ -249,11 +254,28 @@ void changeDirection(int rid) {
 
     //更新路径
     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
-    if (!t.empty()) {
+    // if (!t.empty()) {
         //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
-        robot[rid].directions = t;
+    robot[rid].directions = t;
+    if (!t.empty())
         robot[rid].directions.push_back(dir[c]);
+    // }
+}
+
+/*
+还是想去近一点的港口
+*/
+int choseClosestBerth (int robotID) {
+    int berthID = 0;
+    int min = robot[robotID].x + robot[robotID].y - berth[0].x - berth[0].y;
+    for (int j = 1; j < 10; j++) {
+        if (min < robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y)
+        {
+            min = robot[robotID].x + robot[robotID].y - berth[j].x - berth[j].y;
+            berthID = j;
+        }
     }
+    return berthID;
 }
 
 int main() {
@@ -271,18 +293,17 @@ int main() {
             goods_queue.push(goods[j]);
         }
         
-        for (int i = 0; i < 10; ++i) {
+        for (int i = 0; i < 10; ++i) {            
             //找到空闲的机器人就去分配货物
-            if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0) {
+            if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
                 Goods tmp = goods_queue.top();
+                robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
+                robot[i].mbx = tmp.x;
+                robot[i].mby = tmp.y;
+                robot[i].status = 1;
                 goods_queue.pop();
-                vector<string> g = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-                if (!g.empty()) {
-                    robot[i].mbx = tmp.x;
-                    robot[i].mby = tmp.y;
-                    robot[i].directions = g;
-                    robot[i].status = 1;
-                }
+            } else if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
+                robot[i].status = 1;
             }
         }
 
@@ -298,7 +319,7 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-                changeDirection(i);
+                changeDirection(i, frame_id);
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
@@ -328,12 +349,14 @@ int main() {
                 //         tmp = one;
                 //     }
                 // }
+                
                 if (robot[i].directions.empty()) {
-                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                    int berthID = choseClosestBerth(i);
+                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[berthID].x,berth[berthID].y);
                     if (!tmp.empty()) {
                         robot[i].directions = tmp;
-                        robot[i].mbx = berth[i].x;
-                        robot[i].mby = berth[i].y;
+                        robot[i].mbx = berth[berthID].x;
+                        robot[i].mby = berth[berthID].y;
                     }
                 }
             
