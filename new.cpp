@@ -3,6 +3,7 @@
 #include <cstring>
 #include <string>
 #include <cmath>
+#include <stack>
 #include <vector>
 #include <queue>
 #include <map>
@@ -77,9 +78,6 @@ struct Berth
     int time;
     int velocity;
 
-
-
-
 }berth[B_SIZE];
 
 struct Boat
@@ -102,10 +100,14 @@ struct Robot
     int x,y;
     int mbx, mby; //?
     bool has_goods;
-    int goods_id;
+    int berth_id;
     int status; //0 free 1 work 2 collision
     int st;
+    stack<int> re;
     vector<string> directions;
+    Robot(){
+        status = 2;
+    }
 }robot[10];
 
 struct Goods
@@ -137,6 +139,7 @@ vector<int> dist(maxn, INF);    //临时距离
 vector<int> pre(maxn, -1);      //临时路径
 vector<vector<int>> minlen(10,vector<int>(maxn,INF));   //泊位i到任意点的最短距离
 vector<vector<int>> berthPre(10,vector<int>(maxn,-1));    //泊位i的pre数组
+vector<vector<vector<int>>> pathto(10,vector<vector<int>>(maxn));
  
 void dijkstra(int start) {
     priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
@@ -188,6 +191,16 @@ for (int &p : path) {
 }
 */
 
+//坐标变换
+pair<int,int> pos2xy(int pos) {
+    int x = pos / N , y = pos % N;
+    return {x,y};
+}
+
+int xy2pos(pair<int,int> xy) {
+    return xy.first * N + xy.second;
+}
+
 void Init()
 {
     for(int i = 0; i < M_SIZE; i ++)
@@ -205,9 +218,26 @@ void Init()
         int pos = berth[i].x * N + berth[i].y;
         dijkstra(pos);
         minlen[i] = dist;
-        berthPre[i] = pre;
+        //berthPre[i] = pre;
+        for (int j = 0;j < maxn; ++j) {
+            vector<int>& path = pathto[i][j];
+            int end = j;
+            for (; end != -1; end = pre[end]) {
+                path.push_back(end);
+            }
+            reverse(path.begin(), path.end());
+        }
     }
 
+
+    //定好每个robot选择哪个港口
+    int choice[10] = {0,1,2,3,4,5,6,7,8,9};
+    for (int i = 0;i < 10; ++i){ 
+        robot[i].mbx = berth[choice[i]].x, robot[i].mby = berth[choice[i]].y;
+        robot[i].berth_id = choice[i];
+    }
+        
+    
     //初始化路径
     char okk[100];
     scanf("%s", okk);
@@ -275,18 +305,35 @@ void boatAction (int frameID) {
     }
 }
 
-void robot_move(int robot_id){
-    if (!robot[robot_id].directions.empty()){
-        const char* direc = robot[robot_id].directions.back().c_str();
-        printf("move %d %s\n", robot_id,direc);
-        robot[robot_id].directions.pop_back();
+void move(int rid, int nxt, int pos) {
+    if (nxt - pos == 1){
+        printf("move %d 0\n",rid);
+    } //向右
+    else if (nxt - pos == -1) {
+        printf("move %d 1\n",rid);
+    } //向左
+    else if (nxt - pos == 200) {
+        printf("move %d 3\n",rid);
+    }  //向下
+    else if (nxt - pos == -200) {
+        printf("move %d 2\n",rid);
+    } //向上
+    else
+        return;
+}
+
+void robot_move(int robot_id, int d){
+    if (d == 0) {
+        int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
+        int p = berthPre[robot[robot_id].berth_id][now];
+        move(robot_id, p, now);
+        robot[robot_id].re.push(p);
     } else {
-        if (robot[robot_id].x != robot[robot_id].mbx || robot[robot_id].y != robot[robot_id].mby) {
-            robot[robot_id].status = 0;
-            return;
-        }
+        int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
+        int p = robot[robot_id].re.top();
+        move(robot_id, p, now);
+        robot[robot_id].re.pop();
     }
-    return;
 }
 
 void getGoods(int robot_id){
@@ -334,8 +381,20 @@ void changeDirection(int rid) {
 
 int main() {
     Init();
-    for(int frame = 1; frame <=15000; frame ++){
+    for(int frame = 1; frame <= 15000; frame++){
         int frame_id = Input();
+
+        //第一帧以及每500帧操作一下船
+        // if (frame == 1 || frame % 500 == 0)
+        // 船的操作， 传入当前帧ID
+        boatAction(frame);
+        
+        //初始状态全部滚去港口
+        // for (int i = 0;i < 10; i++) {
+        //     if (robot[i].status == 2) {
+        //         robot_move(i);
+        //     }
+        // }
 
         
         puts("OK");
