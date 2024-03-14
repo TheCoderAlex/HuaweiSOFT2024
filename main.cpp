@@ -26,6 +26,7 @@ int k;
 int dx[4] = {0, 1, -1, 0};
 int dy[4] = {-1, 0, 0, 1};
 string dir[4] = {"1", "3", "2", "0"};
+bool has_cracked[10];
 
 bool isValid(int x, int y) {
     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
@@ -334,7 +335,9 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-                changeDirection(i, frame_id);
+                //changeDirection(i, frame_id);
+                has_cracked[i] = 1;
+                continue;
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
@@ -362,6 +365,10 @@ int main() {
                 //         tmp = one;
                 //     }
                 // }
+                if (has_cracked[i] == 1) {
+                    changeDirection(i, frame_id);
+                    has_cracked[i] = 0;
+                }
                 
                 if (robot[i].directions.empty()) {
                     vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
