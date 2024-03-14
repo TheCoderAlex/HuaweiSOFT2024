@@ -550,6 +550,7 @@ int main() {
         //分货
         for (int i = 0; i < 10; ++i) {
             //找到空闲的机器人就去分配货物
+            if (hasAvoid[i])    continue;
             if (robot[i].status == 0 && robot[i].st != 0) {
                 Goods tmp = goods_queue.top();
                 goods_queue.pop();
