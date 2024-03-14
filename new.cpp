@@ -352,14 +352,18 @@ void robot_move(int robot_id, int d){
             return;
         
         //cout << robot_id << " move to target " << target << " now in " << now;
-        int p;
+        int p = -1;
         int i;
-        for (i = 0;i < pathto[robot[robot_id].berth_id][target].size(); ++i) {
+        // 每个pathto[i][target]数组的最后一个应该都是坐标点，因此最后一个元素不需要查找
+        for (i = 0;i < pathto[robot[robot_id].berth_id][target].size() - 1; ++i) {
             if (pathto[robot[robot_id].berth_id][target][i] == now) {
                 p = pathto[robot[robot_id].berth_id][target][i+1];
                 break;
             }
         }
+        //p = -1代表到达终点，不执行move
+        if (p == -1)
+            return;
         //cout << " it want to move to " << p << endl;
         move(robot_id, p, now);
     }
@@ -427,10 +431,11 @@ int main() {
         for (int i = 0;i < 10; ++i) {
             if (robot[i].status == 2 && robot[i].st != 0) {
                 robot_move(i ,0);
+                //放到内部
+                if (robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby) {
+                    robot[i].status = 0;
+                } 
             }
-            if (robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby) {
-                robot[i].status = 0;
-            } 
         }
 
         //分货
@@ -452,8 +457,10 @@ int main() {
 
         //机器人根据状态进行移动
         for (int i = 0;i < 10; ++i) {
-            //如果没带货物碰撞
-            if (robot[i].st == 0 && !robot[i].has_goods) {
+            //初始状态碰撞要单独处理
+
+            //如果没带货物碰撞(非初始状态)
+            if (robot[i].st == 0 && !robot[i].has_goods && robot[i].status != 2) {
                 robot[i].status = 0;
                 // has_cracked[i] = 1;
                 continue;
