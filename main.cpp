@@ -96,17 +96,6 @@ struct Boat
     }
 }boat[BOAT_SIZE];
 
-struct Robot
-{
-    int x,y;
-    int mbx, mby; //?
-    bool has_goods;
-    int goods_id;
-    int status; //0 free 1 work 2 collision
-    int st;
-    vector<string> directions;
-}robot[10];
-
 struct Goods
 {
     int x,y;
@@ -123,6 +112,18 @@ struct Goods
     }
 };
 priority_queue<Goods> goods_queue;
+
+struct Robot
+{
+    int x,y;
+    int mbx, mby; //?
+    bool has_goods;
+    int goods_id;
+    int status; //0 free 1 work 2 collision
+    int st;
+    vector<string> directions;
+    priority_queue<Goods> myGoods;
+}robot[10];
 
 /*
  * 优先队列用法
@@ -237,37 +238,39 @@ void pullGoods(int robot_id){
 }
 
 void changeDirection(int rid, int frame) {
-    string tmp = robot[rid].directions.back();
+    // string tmp = robot[rid].directions.back();
     
-    //如果剩下三个个方向全是墙就不改变方向
-    int i;
-    for (i = 0;i < 4; ++i) {
-        if (dir[i] == tmp)  continue;
-        if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
-            break;
-    }
-    if (i == 4) return;
+    // //如果剩下三个个方向全是墙就不改变方向
+    // int i;
+    // for (i = 0;i < 4; ++i) {
+    //     if (dir[i] == tmp)  continue;
+    //     if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
+    //         break;
+    // }
+    // if (i == 4) return;
 
-    if (frame % 20 == 0) {
+    // if (frame % 20 == 0) {
         robot[rid].mbx = berth[rand() % 10].x;
         robot[rid].mby = berth[rand() % 10].y;
-    }
+    // }
     
     //随机选择一个可以走的位置
-    int c,x,y,newx,newy;
-    do {
-        c = rand() % 4;
-        x = dx[c], y = dy[c];
-        newx = robot[rid].x + x, newy = robot[rid].y + y;
-    } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+    // int c,x,y,newx,newy;
+    // do {
+    //     c = rand() % 4;
+    //     x = dx[c], y = dy[c];
+    //     newx = robot[rid].x + x, newy = robot[rid].y + y;
+    // } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+    int newx = robot[rid].x;
+    int newy = robot[rid].y;
 
     //更新路径
     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
     // if (!t.empty()) {
         //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
     robot[rid].directions = t;
-    if (!t.empty())
-        robot[rid].directions.push_back(dir[c]);
+    // if (!t.empty())
+    //     robot[rid].directions.push_back(dir[c]);
     // }
 }
 
@@ -291,10 +294,10 @@ int main() {
             while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
                 Goods tmp = goods_queue.top();
                 if (-40 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 40 && -40 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=40) {
-                    robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-                    robot[i].mbx = tmp.x;
-                    robot[i].mby = tmp.y;
-                    robot[i].status = 1;
+
+                    cout << i <<" : 我又被分配了一个新的货物！" << endl;
+
+                    robot[i].myGoods.push(tmp);
                     goods_queue.pop();
                 } else {
                     temp.push(goods_queue.top());
@@ -305,6 +308,21 @@ int main() {
                 goods_queue.push(temp.top());
                 temp.pop();
             }
+            if (!robot[i].myGoods.empty()) {
+
+                cout << i << "我现在有" << robot[i].myGoods.size() << "个待拿取货物" << endl;
+
+                while (frame_id - robot[i].myGoods.top().frame >= 1000) {
+                    robot[i].myGoods.pop();
+                }
+                Goods tmp = robot[i].myGoods.top();
+                robot[i].myGoods.pop();
+                robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
+                robot[i].mbx = tmp.x;
+                robot[i].mby = tmp.y;
+                robot[i].status = 1;
+            }
+            
 
             //如果没带货物碰撞
             if (robot[i].st == 0 && !robot[i].has_goods) {
