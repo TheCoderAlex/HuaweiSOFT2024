@@ -4,6 +4,7 @@
 #include <string>
 #include <cmath>
 #include <stack>
+#include <set>
 #include <vector>
 #include <queue>
 #include <map>
@@ -30,47 +31,47 @@ int dy[4] = {0, 0, -1, 1};
 string dir[4] = {"2", "3", "1", "0"};
 int has_cracked[10] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
-bool isValid(int x, int y) {
-    return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
-}
+// bool isValid(int x, int y) {
+//     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
+// }
 
-vector<string> BFS(int startX, int startY, int endX, int endY) {
-    queue<pair<int, int>> q;
-    vector<vector<bool>> visited(M_SIZE, vector<bool>(M_SIZE, false));
-    map<pair<int, int>, pair<int, int>> parent;
-    map<pair<int, int>, string> move;
+// vector<string> BFS(int startX, int startY, int endX, int endY) {
+//     queue<pair<int, int>> q;
+//     vector<vector<bool>> visited(M_SIZE, vector<bool>(M_SIZE, false));
+//     map<pair<int, int>, pair<int, int>> parent;
+//     map<pair<int, int>, string> move;
 
-    q.push({startX, startY});
-    visited[startX][startY] = true;
+//     q.push({startX, startY});
+//     visited[startX][startY] = true;
 
-    while (!q.empty()) {
-        auto [x,y] = q.front();
-        q.pop();
+//     while (!q.empty()) {
+//         auto [x,y] = q.front();
+//         q.pop();
 
-        if (x == endX && y == endY) {
-            vector<string> path;
-            pair<int, int> cur = {endX, endY};
-            while (!(cur.first == startX && cur.second == startY)) {
-                path.push_back(move[cur]);
-                cur = parent[cur];
-            }
-            return path;
-        }
+//         if (x == endX && y == endY) {
+//             vector<string> path;
+//             pair<int, int> cur = {endX, endY};
+//             while (!(cur.first == startX && cur.second == startY)) {
+//                 path.push_back(move[cur]);
+//                 cur = parent[cur];
+//             }
+//             return path;
+//         }
 
-        for (int i = 0; i < 4; ++i) {
-            int nx = x + dx[i], ny = y + dy[i];
+//         for (int i = 0; i < 4; ++i) {
+//             int nx = x + dx[i], ny = y + dy[i];
 
-            if (isValid(nx, ny) && !visited[nx][ny]) {
-                visited[nx][ny] = true;
-                q.push({nx, ny});
-                parent[{nx, ny}] = {x, y};
-                move[{nx, ny}] = dir[i];
-            }
-        }
-    }
+//             if (isValid(nx, ny) && !visited[nx][ny]) {
+//                 visited[nx][ny] = true;
+//                 q.push({nx, ny});
+//                 parent[{nx, ny}] = {x, y};
+//                 move[{nx, ny}] = dir[i];
+//             }
+//         }
+//     }
 
-    return {};
-}
+//     return {};
+// }
 
 struct Berth
 {
@@ -101,12 +102,15 @@ struct Robot
     int x,y;
     int mbx, mby; // target
     bool has_goods;
+    int goodPos; //每次get货物之后更新
     int berth_id;
     int status; //0 free 1 work 2 init
     int st;
-    vector<string> directions;
+    int dir; //0去泊位 1去货物
+    // vector<string> directions;
     Robot(){
         status = 2;
+        dir = 0;
     }
 }robot[10];
 
@@ -134,6 +138,11 @@ const int N = 200;
 const int maxn = N * N;
 const int INF = 0x3f3f3f3f;
 const vector<pair<int, int>> directions{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+int currentPos[10];    //当前机器人位置集合
+int avoidto[10];   //key对value执行了碰撞避免
+bool hasAvoid[10];  //当前回合那些机器人执行了避让，接下来不再执行任何操作
+int choice[10] = {0,1,2,3,4,5,6,7,8,9};
 
 vector<int> dist(maxn, INF);    //临时距离
 vector<int> pre(maxn, -1);      //临时路径
@@ -241,14 +250,21 @@ void Init()
     // }
 
     //定好每个robot选择哪个港口
-    int choice[10] = {0,1,2,3,4,5,6,7,8,9};
     for (int i = 0;i < 10; ++i){ 
         robot[i].mbx = berth[choice[i]].x, robot[i].mby = berth[choice[i]].y;
         robot[i].berth_id = choice[i];
     }
         
-    
-    //初始化路径
+    //将机器人的goodsPos设置为初始位置方便回退
+    int cnt = 0;
+    for (int i = 0; i < 200; ++i) {
+        for (int j = 0; j < 200; ++j) {
+            if (mp[i][j] == 'A') {
+                robot[cnt++].goodPos = xy2pos({i,j});
+            }
+        }
+    }
+
     char okk[100];
     scanf("%s", okk);
     printf("OK\n");
@@ -257,6 +273,9 @@ void Init()
 
 int Input()
 {
+    //清空避让数组
+    memset(avoidto, -1, sizeof avoidto);
+    memset(hasAvoid, 0, sizeof hasAvoid);
     scanf("%d%d", &frame_id, &money);
     scanf("%d", &k);
     for(int i = 0; i < k; i ++)
@@ -270,6 +289,7 @@ int Input()
     for(int i = 0; i < 10; i ++)
     {
         scanf("%d%d%d%d", &robot[i].has_goods, &robot[i].x, &robot[i].y, &robot[i].st);
+        currentPos[i] = xy2pos({robot[i].x,robot[i].y});
     }
     for(int i = 0; i < 5; i ++)
         scanf("%d%d\n", &boat[i].status, &boat[i].id);
@@ -350,9 +370,11 @@ void robot_move(int robot_id, int d){
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
         int target = xy2pos({robot[robot_id].mbx,robot[robot_id].mby});
 
-        //如果不可达直接返回
-        if(pathto[robot[robot_id].berth_id][target].size() == 1)
+        //如果不可达直接返回，将机器人状态换为空闲，否则会原地不动
+        if(pathto[robot[robot_id].berth_id][target].size() == 1){
+            robot[robot_id].status = 0;
             return;
+        }
         
         // cout << robot_id << "\n move to target " << target << " now in " << now << "=========\n";
         int p = -1;
@@ -385,42 +407,118 @@ void pullGoods(int robot_id){
     printf("pull %d\n", robot_id);
 }
 
-void changeDirection(int rid) {
-    string tmp = robot[rid].directions.back();
-    
-    //如果剩下三个个方向全是墙就不改变方向
-    int i;
-    for (i = 0;i < 4; ++i) {
-        if (dir[i] == tmp)  continue;
-        if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
-            break;
-    }
-    if (i == 4) return;
-
-    //随机选择一个可以走的位置
-    int c,x,y,newx,newy;
-    do {
-        c = rand() % 4;
-        x = dx[c], y = dy[c];
-        newx = robot[rid].x + x, newy = robot[rid].y + y;
-    } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
-
-    //更新路径
-    vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
-    if (!t.empty()) {
-        //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
-        robot[rid].directions = t;
-        robot[rid].directions.push_back(dir[c]);
+//碰撞避免
+void avoidCollision() {
+    for (int i = 0; i < 10; ++i) {
+        //检查该机器人下一步是否碰到另外的机器人
+        if (robot[i].dir == 0) {
+            //朝泊位移动的机器人
+            int now = xy2pos({robot[i].x,robot[i].y});
+            int p = berthPre[robot[i].berth_id][now];
+            //找到它下一个位置及其下一个位置的周围是否存在其他人
+            int postions[4] = {p - 1, p + 1, p - 200, p + 200};
+            int j, will_colli = 0;
+            for (j = 0; j < 10; ++j) {
+                if (j == i) continue;
+                if (currentPos[j] == p || currentPos[j] == postions[0] || currentPos[j] == postions[1] || currentPos[j] == postions[2] || currentPos[j] == postions[3]) {
+                    //找到即将碰撞的机器人，不会存在其他机器人了
+                    will_colli = 1;
+                    break;
+                }
+            }
+            if (will_colli == 0)    continue;
+            //处理碰撞
+            //如果对方已经避让了，就不再避让
+            if (avoidto[j] == i)    continue;
+            //j没有避让，i回退一格，记录i避让j，同时i该回合不再执行其他任何操作
+            //因为是朝着泊位移动的，因此向货物方向退。如果已经退到了货物方向，就随便退
+            int target = robot[i].goodPos;
+            if (now == target) {
+                //随便退一格
+                int d[4] = {-1,1,200,-200};
+                int c,newpos;
+                pair<int,int> n;
+                do {
+                    c = rand() % 4;
+                    newpos = now + d[c];
+                    n = pos2xy(newpos);
+                } while (newpos == p || mp[n.first][n.second] == '#' || mp[n.first][n.second] == '*');
+                move(i,newpos,now);
+            } else {
+                //朝着货物方向走一格
+                int ans = -1;
+                for (int k = 0;k < pathto[robot[i].berth_id][target].size() - 1; ++k) {
+                        if (pathto[robot[i].berth_id][target][k] == now) {
+                        ans = pathto[robot[i].berth_id][target][k+1];
+                        break;
+                    }
+                }
+                //应该是能找到的
+                // if (ans == -1)   continue;
+                move(i,ans,now);
+                //记录i避让j并且i hasAvoid
+                avoidto[i] = j, hasAvoid[i] = 1;   
+            }
+        } else {
+            //朝货物移动的机器人
+            int now = xy2pos({robot[i].x,robot[i].y});
+            int p = berthPre[robot[i].berth_id][now];
+            //找到它下一个位置及其下一个位置的周围是否存在其他人
+            int postions[4] = {p - 1, p + 1, p - 200, p + 200};
+            int j, will_colli = 0;
+            for (j = 0; j < 10; ++j) {
+                if (j == i) continue;
+                if (currentPos[j] == p || currentPos[j] == postions[0] || currentPos[j] == postions[1] || currentPos[j] == postions[2] || currentPos[j] == postions[3]) {
+                    //找到即将碰撞的机器人，不会存在其他机器人了
+                    will_colli = 1;
+                    break;
+                }
+            }
+            if (will_colli == 0)    continue;
+            //处理碰撞
+            //如果对方已经避让了，就不再避让
+            if (avoidto[j] == i)    continue;
+            //j没有避让，i回退一格，记录i避让j，同时i该回合不再执行其他任何操作
+            //因为是朝着货物移动的，回退就是向泊位移动一格，而每个机器人的泊位是固定的，因此退到泊位便肯定不会发生碰撞
+            int target = xy2pos({berth[robot[i].berth_id].x,berth[robot[i].berth_id].y});
+            move(i, target, now);
+            //记录i避让j并且i hasAvoid
+            avoidto[i] = j, hasAvoid[i] = 1;   
+        }
     }
 }
+// void changeDirection(int rid) {
+//     string tmp = robot[rid].directions.back();
+    
+//     //如果剩下三个个方向全是墙就不改变方向
+//     int i;
+//     for (i = 0;i < 4; ++i) {
+//         if (dir[i] == tmp)  continue;
+//         if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
+//             break;
+//     }
+//     if (i == 4) return;
+
+//     //随机选择一个可以走的位置
+//     int c,x,y,newx,newy;
+//     do {
+//         c = rand() % 4;
+//         x = dx[c], y = dy[c];
+//         newx = robot[rid].x + x, newy = robot[rid].y + y;
+//     } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+
+//     //更新路径
+//     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
+//     if (!t.empty()) {
+//         //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
+//         robot[rid].directions = t;
+//         robot[rid].directions.push_back(dir[c]);
+//     }
+// }
 
 
 int main() {
     Init();
-    // cout << berthPre[robot[5].berth_id][29216] << "\n";
-    // cout << berthPre[robot[5].berth_id][29416] << "\n";
-    // cout << berthPre[robot[5].berth_id][29616] << "\n";
-    // cout << berth[5].x << " , " << berth[5].y << "\n";
     for(int frame = 1; frame <= 15000; frame++){
         int frame_id = Input();
 
@@ -434,10 +532,12 @@ int main() {
             goods_queue.push(goods[j]);
         }
 
-        
+        //首先处理碰撞
+        avoidCollision();
 
         //初始状态全部滚去港口
         for (int i = 0;i < 10; ++i) {
+            if (hasAvoid[i])    continue;   //如果回退了本回合不进行操作
             if (robot[i].status == 2 && robot[i].st != 0) {
                 robot_move(i ,0);
                 //放到内部
@@ -445,7 +545,7 @@ int main() {
                     robot[i].status = 0;
                 } 
             }
-        }
+        } 
 
         //分货
         for (int i = 0; i < 10; ++i) {
@@ -460,54 +560,36 @@ int main() {
                     robot[i].mbx = tmp.x;
                     robot[i].mby = tmp.y;
                     robot[i].status = 1;
+                    robot[i].dir = 1;
                 }
             }
         }
-        if(frame_id == 125) cout << robot[5].mbx << " , " << robot[5].mby << "\n";
-        if(frame_id == 126) cout << robot[5].mbx << " , " << robot[5].mby << "\n";
-        if(frame_id == 127) cout << robot[5].mbx << " , " << robot[5].mby << "\n";
 
-        //机器人根据状态进行移动
         for (int i = 0;i < 10; ++i) {
-            // cout << "====" << robot[i].x << " , " << robot[i].y 
-            //     << "=========" << robot[i].mbx << " , " << robot[i].mby << "\n"; 
-            //初始状态碰撞要单独处理
-
-            //如果没带货物碰撞(非初始状态)
-            if (robot[i].st == 0 && !robot[i].has_goods && robot[i].status != 2) {
-                robot[i].status = 0;
-                // has_cracked[i] = 1;
-                continue;
-            }
-
-            if (robot[i].st == 0 && robot[i].has_goods)
-                has_cracked[i] = 1;
-
-            if(robot[i].status == 1 && !robot[i].has_goods) {//在拿货物的路上
+            if (hasAvoid[i])    continue;
+            if (robot[i].status == 1 && !robot[i].has_goods) {//在拿货物的路上
                 //刚才发生了碰撞
                 //cout  << "move: " << i << ' ' << robot[i].x << ' ' << robot[i].y << endl;
                 robot_move(i, 1);
                 //点位重合则get
                 //cout << robot[i].x << " " << robot[i].y << " " << robot[i].mbx << ' ' << robot[i].mby << endl;
-                if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby)
+                if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby) {
                     getGoods(i);
-            }else if(robot[i].status == 1 && robot[i].has_goods){//拿到货物去泊位
-                if(has_cracked[i] == 1){
-                    int c, x, y, newx, newy;
-                    do{
-                        c = rand() % 4;
-                        x = dx[c], y = dx[c];
-                        newx = robot[i].x + x, newy = robot[i].y + y;
-                    }while(mp[newx][newy] != '#' && mp[newx][newy] != '*');
-                    move(i, xy2pos({newx, newy}), xy2pos({robot[i].x, robot[i].y}));
-                    has_cracked[i] = 0;
-                } else {
-                    robot_move(i, 0);
+                    robot[i].dir = 0;
+                    robot[i].goodPos = xy2pos({robot[i].x,robot[i].y});
                 }
-                if(robot[i].x == robot[i].mbx && robot[i].y == robot[i].mby)
+
+            }else if(robot[i].status == 1 && robot[i].has_goods){//拿到货物去泊位
+                
+                robot_move(i, 0);
+
+                if(robot[i].x == berth[robot[i].berth_id].x && robot[i].y == berth[robot[i].berth_id].y) {
                     pullGoods(i);
+                    robot[i].dir = 1;
+                }
             }
         }
+
         puts("OK");
         fflush(stdout);
     }

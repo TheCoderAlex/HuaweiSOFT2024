@@ -29,6 +29,7 @@
         "fstream": "cpp",
         "sstream": "cpp",
         "iosfwd": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "unordered_map": "cpp"
     }
 }
