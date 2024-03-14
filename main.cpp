@@ -335,12 +335,8 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-<<<<<<< HEAD
-                changeDirection(i, frame_id);
-=======
                 //changeDirection(i, frame_id);
                 has_cracked[i] = 1;
->>>>>>> ce04179e94f548456c74b8a671dca6b0820628ea
                 continue;
             }
 

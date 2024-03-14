@@ -446,11 +446,7 @@ void avoidCollision() {
                     n = pos2xy(newpos);
                 } while (newpos == p || mp[n.first][n.second] == '#' || mp[n.first][n.second] == '*');
                 move(i,newpos,now);
-<<<<<<< HEAD
-                avoidto[i] = j, hasAvoid[i] = 1;
-=======
                 avoidto[i] = j, hasAvoid[i] = 1;   
->>>>>>> ce04179e94f548456c74b8a671dca6b0820628ea
             } else {
                 //朝着货物方向走一格
                 int ans = -1;
