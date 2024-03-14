@@ -99,10 +99,10 @@ struct Boat
 struct Robot
 {
     int x,y;
-    int mbx, mby; //?
+    int mbx, mby; // target
     bool has_goods;
     int berth_id;
-    int status; //0 free 1 work 2 collision
+    int status; //0 free 1 work 2 init
     int st;
     vector<string> directions;
     Robot(){
@@ -342,8 +342,11 @@ void robot_move(int robot_id, int d){
         int p = berthPre[robot[robot_id].berth_id][now];
         if (p == -1)
             return;
+        // cout << robot_id << " move to Berth " << p << " now in " << now << "=========\n";
         move(robot_id, p, now);
     } else {
+        // if(robot_id == 5)
+            // cout << "robot_5 is moving to" << xy2pos({robot[5].mbx, robot[5].mby}) << " \n";
         int now = xy2pos({robot[robot_id].x,robot[robot_id].y});
         int target = xy2pos({robot[robot_id].mbx,robot[robot_id].mby});
 
@@ -351,7 +354,7 @@ void robot_move(int robot_id, int d){
         if(pathto[robot[robot_id].berth_id][target].size() == 1)
             return;
         
-        //cout << robot_id << " move to target " << target << " now in " << now;
+        // cout << robot_id << "\n move to target " << target << " now in " << now << "=========\n";
         int p = -1;
         int i;
         // 每个pathto[i][target]数组的最后一个应该都是坐标点，因此最后一个元素不需要查找
@@ -414,6 +417,10 @@ void changeDirection(int rid) {
 
 int main() {
     Init();
+    // cout << berthPre[robot[5].berth_id][29216] << "\n";
+    // cout << berthPre[robot[5].berth_id][29416] << "\n";
+    // cout << berthPre[robot[5].berth_id][29616] << "\n";
+    // cout << berth[5].x << " , " << berth[5].y << "\n";
     for(int frame = 1; frame <= 15000; frame++){
         int frame_id = Input();
 
@@ -426,6 +433,8 @@ int main() {
         for (int j = 0; j < k; ++j) {
             goods_queue.push(goods[j]);
         }
+
+        
 
         //初始状态全部滚去港口
         for (int i = 0;i < 10; ++i) {
@@ -454,9 +463,14 @@ int main() {
                 }
             }
         }
+        if(frame_id == 125) cout << robot[5].mbx << " , " << robot[5].mby << "\n";
+        if(frame_id == 126) cout << robot[5].mbx << " , " << robot[5].mby << "\n";
+        if(frame_id == 127) cout << robot[5].mbx << " , " << robot[5].mby << "\n";
 
         //机器人根据状态进行移动
         for (int i = 0;i < 10; ++i) {
+            // cout << "====" << robot[i].x << " , " << robot[i].y 
+            //     << "=========" << robot[i].mbx << " , " << robot[i].mby << "\n"; 
             //初始状态碰撞要单独处理
 
             //如果没带货物碰撞(非初始状态)
