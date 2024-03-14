@@ -12,6 +12,7 @@
 #include <utility>
 #include <cstdlib>
 #include <algorithm>
+#include <fstream>
 
 using namespace std;
 const int M_SIZE = 200;
@@ -23,6 +24,7 @@ char mp[M_SIZE][M_SIZE];
 int boat_capacity;
 int money,frame_id;
 int k;
+ofstream f("out.txt");  
 
 // queue<pair<int, int>> goods_queue;
 
@@ -444,6 +446,7 @@ void avoidCollision() {
                     n = pos2xy(newpos);
                 } while (newpos == p || mp[n.first][n.second] == '#' || mp[n.first][n.second] == '*');
                 move(i,newpos,now);
+                
             } else {
                 //朝着货物方向走一格
                 int ans = -1;
@@ -459,6 +462,8 @@ void avoidCollision() {
                 //记录i避让j并且i hasAvoid
                 avoidto[i] = j, hasAvoid[i] = 1;   
             }
+            f << "=========robot " << i << " currentPos: "<< currentPos[i] <<
+            " avoid: "<< avoidto[i] << "\n";
         } else {
             //朝货物移动的机器人
             int now = xy2pos({robot[i].x,robot[i].y});
@@ -521,6 +526,7 @@ int main() {
     Init();
     for(int frame = 1; frame <= 15000; frame++){
         int frame_id = Input();
+        f << "frame_id:" << frame_id << "\n";
 
         //第一帧以及每500帧操作一下船
         // if (frame == 1 || frame % 500 == 0)
