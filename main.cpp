@@ -111,10 +111,17 @@ struct Goods
 {
     int x,y;
     int value;
+    int frame;
     bool operator<(const Goods& other) const {
         return value < other.value;
     }
-}goods[10];
+    Goods (int frame, int x, int y, int val) {
+        this->frame = frame;
+        this->x = x;
+        this->y = y;
+        this->value = val;
+    }
+};
 priority_queue<Goods> goods_queue;
 
 /*
@@ -151,9 +158,8 @@ int Input()
     {
         int x, y, val;
         scanf("%d%d%d", &x, &y, &val);
-        goods[i].x = x;
-        goods[i].y = y;
-        goods[i].value = val;
+        Goods goods = {frame_id, x, y, val};
+        goods_queue.push(goods);
     }
     for(int i = 0; i < 10; i ++)
     {
@@ -269,33 +275,37 @@ int main() {
     Init();
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
-
         //第一帧以及每500帧操作一下船
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
-        boatAction(frame);
+        boatAction(frame_id);
 
-        //新增的货物入队
-        for (int j = 0; j < k; ++j) {
-            goods_queue.push(goods[j]);
-        }
+        //新增的货物入队 集合到 Input 函数中了
         
-        for (int i = 0; i < 10; ++i) {            
+        for (int i = 0; i < 10; ++i) {         
+            if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
+                robot[i].status = 1;
+            }   
+            priority_queue<Goods> temp;
             //找到空闲的机器人就去分配货物
-            if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
+            while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
                 Goods tmp = goods_queue.top();
-                robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-                robot[i].mbx = tmp.x;
-                robot[i].mby = tmp.y;
-                robot[i].status = 1;
-                goods_queue.pop();
-            } else if (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
-                robot[i].status = 1;
+                if (-40 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 40 && -40 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=40) {
+                    robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
+                    robot[i].mbx = tmp.x;
+                    robot[i].mby = tmp.y;
+                    robot[i].status = 1;
+                    goods_queue.pop();
+                } else {
+                    temp.push(goods_queue.top());
+                    goods_queue.pop();
+                }
             }
-        }
+            while (!temp.empty()) {
+                goods_queue.push(temp.top());
+                temp.pop();
+            }
 
-        //机器人根据状态进行移动
-        for (int i = 0;i < 10; ++i) {
             //如果没带货物碰撞
             if (robot[i].st == 0 && !robot[i].has_goods) {
                 robot[i].status = 0;
@@ -349,6 +359,9 @@ int main() {
                     pullGoods(i);
                 }
             }
+        }
+        while (!goods_queue.empty()) {
+            goods_queue.pop();
         }
         puts("OK");
         fflush(stdout);
