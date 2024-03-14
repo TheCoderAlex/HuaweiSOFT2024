@@ -502,7 +502,7 @@ void avoidCollision() {
             if (avoidto[j] == i)    continue;
             //j没有避让，i回退一格，记录i避让j，同时i该回合不再执行其他任何操作
             //因为是朝着货物移动的，回退就是向泊位移动一格，而每个机器人的泊位是固定的，因此退到泊位便肯定不会发生碰撞
-            int target = xy2pos({berth[robot[i].berth_id].x,berth[robot[i].berth_id].y});
+            int target = berthPre[robot[i].berth_id][now];
             move(i, target, now);
             //记录i避让j并且i hasAvoid
             avoidto[i] = j, hasAvoid[i] = 1;  
