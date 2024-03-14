@@ -462,16 +462,33 @@ void avoidCollision() {
                 //记录i避让j并且i hasAvoid
                 avoidto[i] = j, hasAvoid[i] = 1;   
             }
-            f << "=========robot " << i << " currentPos: "<< currentPos[i] <<
-            " avoid: "<< avoidto[i] << "\n";
         } else {
             //朝货物移动的机器人
             int now = xy2pos({robot[i].x,robot[i].y});
-            int p = berthPre[robot[i].berth_id][now];
+            int goods = xy2pos({robot[i].mbx,robot[i].mby});
+            int p = -1;
+            for(int k = 0; k < pathto[robot[i].berth_id][goods].size() - 1; ++k){
+                if (pathto[robot[i].berth_id][goods][k] == now){
+                    p = pathto[robot[i].berth_id][goods][k+1];
+                    break;
+                }
+            }
+            
+
+            // int p = berthPre[robot[i].berth_id][now];
             //找到它下一个位置及其下一个位置的周围是否存在其他人
             int postions[4] = {p - 1, p + 1, p - 200, p + 200};
             int j, will_colli = 0;
             for (j = 0; j < 10; ++j) {
+                if(frame_id >= 590 && frame_id <= 700 && i == 4){
+                    f << p << "\n";
+                    f << postions[0] << "\n";
+                    f << postions[1] << "\n";
+                    f << postions[2] << "\n";
+                    f << postions[3] << "\n";
+
+                    f << "robot " << j << " locate in " << currentPos[j] << "\n";
+                }
                 if (j == i) continue;
                 if (currentPos[j] == p || currentPos[j] == postions[0] || currentPos[j] == postions[1] || currentPos[j] == postions[2] || currentPos[j] == postions[3]) {
                     //找到即将碰撞的机器人，不会存在其他机器人了
@@ -488,8 +505,10 @@ void avoidCollision() {
             int target = xy2pos({berth[robot[i].berth_id].x,berth[robot[i].berth_id].y});
             move(i, target, now);
             //记录i避让j并且i hasAvoid
-            avoidto[i] = j, hasAvoid[i] = 1;   
+            avoidto[i] = j, hasAvoid[i] = 1;  
         }
+        f << "=========robot " << i << " currentPos: "<< currentPos[i] <<
+            " avoid: "<< avoidto[i] << "\n";
     }
 }
 // void changeDirection(int rid) {
