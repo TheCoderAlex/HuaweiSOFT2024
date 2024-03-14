@@ -335,6 +335,7 @@ int main() {
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
                 changeDirection(i, frame_id);
+                continue;
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
