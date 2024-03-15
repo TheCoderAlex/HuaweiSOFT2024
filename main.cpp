@@ -196,12 +196,16 @@ bool boatLastChance (int frameID, int boatID) {
 
 // 找到拥有货物数量最多的泊位
 int getMaxGoodsBerthID () {
-    int maxBerthID = 0;
-    for (int i = 1; i < 10; i++) {
-        if (berth[i].flag)
-            maxBerthID = (berth[maxBerthID].num > berth[i].num) ? maxBerthID : i;
+    int maxGoods = 0;
+    int BerthID = -1;
+    for (int i = 0; i < 10; i++) {
+        if (!berth[i].flag)
+            if (berth[i].num >= maxGoods) {
+                maxGoods = berth[i].num;
+                BerthID = i;
+            }
     }
-    return maxBerthID;
+    return BerthID;
 }
 
 bool isBoatFull (int boatID) {
@@ -222,6 +226,7 @@ void boatAction (int frameID) {
         }
         if (isBoatFull(i)) {
             boat[i].go(i);
+            berth[boat[i].myLastBerth].flag = false;
             boat[i].num = 0;
             continue;
         }
@@ -229,6 +234,7 @@ void boatAction (int frameID) {
         // 判断是不是最后一次送货机会
         if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
             boat[i].go(i);
+            berth[boat[i].myLastBerth].flag = false;
             //取出港口中的货物
             fout << "!!!!!!!!!!!!Boat " << i << " now is the last chance : Berth time is " 
             << berth[boat[i].id].time << " Status is " << boat[i].status 
@@ -249,10 +255,13 @@ void boatAction (int frameID) {
         }
         if (boat[i].id == -1 && boat[i].status != 0) {
             int berthID = getMaxGoodsBerthID();
+            fout << "$$$$$$$$$ Boat " << i << " chooses the " << berthID << endl;
+            boat[i].myLastBerth = berthID;
             boat[i].ship(i, berthID);
+            berth[berthID].flag = true;
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
-
+            boat[i].myLastBerth = boat[i].id;
             // 如果 此时泊位的货物数量小于泊位每帧装卸速度，那就直接讲 泊位num 赋值为0,否则就让让 nun - 装卸速度 velocity
             // 如果 船当前剩余容量小于泊位装卸速度 那么这一帧 最多装我还差的量
             if (berth[boat[i].id].num < berth[boat[i].id].velocity) {
@@ -268,9 +277,11 @@ void boatAction (int frameID) {
             
             // 如果我把这个港口装空了 我就找下一个
             if (!isBoatFull(i) && berth[boat[i].id].num == 0) {
-                boat[i].myLastBerth = boat[i].id;
+                berth[boat[i].myLastBerth].flag = false;
                 int berthID = getMaxGoodsBerthID();
+                fout << "$$$$$$$$$ Boat " << i << " chooses the " << berthID << endl;
                 boat[i].ship(i, berthID);
+                berth[berthID].flag = true;
                 boat[i].shipedFrame = frameID + 500;
             }
         }
