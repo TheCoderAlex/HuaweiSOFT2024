@@ -10,6 +10,7 @@
 #include <ctime>
 #include <utility>
 #include <cstdlib>
+#include <cassert>
 
 using namespace std;
 const int M_SIZE = 200;
@@ -141,6 +142,104 @@ struct Robot
     }
 */
 
+/*Dijkstra*/
+const int N = 200;
+const int maxn = N * N;
+const int INF = 0x3f3f3f3f;
+
+vector<int> dist(maxn, INF);
+ 
+const vector<pair<int, int>> directions{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    vector<bool> vis(maxn,false);
+
+    fill(dist.begin(), dist.end(), INF);
+
+    dist[start] = 0;
+    pq.push({0, start});
+
+    while (!pq.empty()) {
+        auto [cost, pos] = pq.top(); pq.pop();
+
+        //cout << "now in point " << pos << endl;
+        if (vis[pos])   continue;
+        vis[pos] = 1;
+
+        if (cost > dist[pos]) continue;
+
+        int x = pos / N, y = pos % N;
+
+        // 检查四个方向
+        for (auto& dir : directions) {
+            int newX = x + dir.first, newY = y + dir.second;
+            if (newX >= 0 && newX < N && newY >= 0 && newY < N && mp[newX][newY] != '#' && mp[newX][newY] != '*') {
+                int newIndex = newX * N + newY;
+                int newCost = cost + 1;
+                if (newCost < dist[newIndex]) {
+                    dist[newIndex] = newCost;
+                    pq.push({newCost, newIndex});
+                }
+            }
+        }
+    }
+}
+
+/*
+    泊位分配：按照路径长度来为机器人分配初始泊位
+    分配结果储存在choice数组中
+    choice[i] = j 代表第i个机器人选择泊位j
+    放在Init()中
+*/
+void robotBerthChoose() {
+    vector<bool> has_chosen(10,false);    //泊位是否已经被选过
+    int cnt = 0;
+    vector<int> number4robot;  //如果到不了任何泊位
+    for (int i = 0;i < 200; ++i) {
+        if (cnt == 10)  break;
+        for (int j  = 0;j < 200; ++j) {
+            //初始阶段没有提供机器人坐标
+            if (mp[i][j] == 'A') {
+                //对每个机器人遍历10个berth位置
+                fout << "*********** " << i << ' ' << j << endl;
+                int minLength = 0x3f3f3f3f, minID = -1;
+                for (int k = 0; k < 10; k++) {
+                    dijkstra(i * 200 + j);
+                    int l = dist[berth[i].x * 200 + berth[i].y];
+                    if (l == INF)   continue;
+                    if (l < minLength) {
+                        minID = k;
+                        minLength = l;
+                    }
+                }
+                //单独处理一下四号机器人
+                if (minLength == 0x3f3f3f3f) {
+                    number4robot.push_back(cnt++);
+                    continue;
+                }
+                choice[cnt++] = minID;
+                has_chosen[minID] = 1;
+            }
+            if (cnt == 10)  break; 
+        }
+    }
+    if (!number4robot.empty()) {
+        for (int i = 0; i < 10; i++)
+            if (has_chosen[i] == false) {
+                choice[number4robot.back()] = i;
+                number4robot.pop_back();
+                has_chosen[i] = true;
+            }
+    }
+
+    //for debug
+    for (int i = 0;i < 10; i++) {
+        assert(has_chosen[i] == true);
+    }
+
+}
+
 void Init()
 {
     for(int i = 0; i < M_SIZE; i ++)
@@ -159,6 +258,9 @@ void Init()
     
     char okk[100];
     scanf("%s", okk);
+    robotBerthChoose();
+    for (int i = 0;i < 10; ++i)
+        fout << i << " chooses " << choice[i] << "berth.\n";
     printf("OK\n");
     fflush(stdout);
 }
@@ -367,8 +469,7 @@ int main() {
         //第一帧以及每500帧操作一下船
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
-        if (frame >= 700)
-            boatAction(frame_id);
+        boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
