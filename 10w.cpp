@@ -210,7 +210,7 @@ bool isBoatFull (int boatID) {
     return boat[boatID].num == boat_capacity;
 }
 
-void boatAction (int frameID) {
+void boatAction_cycle (int frameID) {
     /* boat.status:
         0 : moving
         1 : finishing shipping OR waiting for loading
@@ -369,7 +369,7 @@ int main() {
         //第一帧以及每500帧操作一下船
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
-        boatAction(frame_id);
+        boatAction_cycle(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
