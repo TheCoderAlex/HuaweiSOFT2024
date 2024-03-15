@@ -6,6 +6,7 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <fstream>
 #include <ctime>
 #include <utility>
 #include <cstdlib>
@@ -27,6 +28,9 @@ int dx[4] = {0, 1, -1, 0};
 int dy[4] = {-1, 0, 0, 1};
 string dir[4] = {"1", "3", "2", "0"};
 bool has_cracked[10];
+ofstream fout("out.txt");
+int choice[10] = {0,1,2,3,4,5,6,7,8,9}; //机器人的泊位选择
+map<pair<int,int>,int> berthid;   //泊位坐标到id的映射
 
 bool isValid(int x, int y) {
     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
@@ -77,6 +81,7 @@ struct Berth
     int time;
     int velocity;
     bool flag;
+    int value; //计算当前泊位拥有的货物价值
     Berth () {
         flag = true;
     }
@@ -119,7 +124,7 @@ struct Robot
     int x,y;
     int mbx, mby; //?
     bool has_goods;
-    int goods_id;
+    int goods_value;
     int status; //0 free 1 work 2 collision
     int st;
     vector<string> directions;
@@ -144,6 +149,7 @@ void Init()
         int id;
         scanf("%d", &id);
         scanf("%d%d%d%d", &berth[id].x, &berth[id].y, &berth[id].time, &berth[id].velocity);
+        berthid[{berth[id].x,berth[id].y}] = id;    //berth坐标到id的映射
     }
     scanf("%d", &boat_capacity);
     char okk[100];
@@ -193,6 +199,10 @@ void boatAction (int frameID) {
         // 判断是不是最后一次送货机会
         if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
             boat[i].go(i);
+            //取出港口中的货物
+            int out = (berth[boat[i].id].value >= boat_capacity) ? boat_capacity : berth[boat[i].id].value;
+            berth[boat[i].id].value -= out;
+
             continue;
         }
 
@@ -234,6 +244,11 @@ void getGoods(int robot_id){
 
 void pullGoods(int robot_id){
     robot[robot_id].status = 0;
+
+    //增加泊位的货物
+    int bid = berthid[{robot[robot_id].mbx,robot[robot_id].mby}];
+    berth[bid].value += robot[robot_id].goods_value;
+    fout << "######### " << robot_id << " pull goods in (" << robot[robot_id].x << "," <<robot[robot_id].y << ") its berth is (" << robot[robot_id].mbx << "," <<robot[robot_id].mby << ")\n";
 
     printf("pull %d\n", robot_id);
 }
@@ -317,6 +332,7 @@ int main() {
                 robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
                 robot[i].mbx = tmp.x;
                 robot[i].mby = tmp.y;
+                robot[i].goods_value = tmp.value;
                 robot[i].status = 1;
             }
             
@@ -367,7 +383,7 @@ int main() {
                 }
                 
                 if (robot[i].directions.empty()) {
-                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[i].x,berth[i].y);
+                    vector<string> tmp = BFS(robot[i].x, robot[i].y,berth[choice[i]].x,berth[choice[i]].y);
                     if (!tmp.empty()) {
                         robot[i].directions = tmp;
                         robot[i].mbx = berth[i].x;
@@ -385,6 +401,13 @@ int main() {
             goods_queue.pop();
         }
         puts("OK");
+        //输出每一帧的泊位剩余货物大小
+        fout << "frame_id: " << frame_id << endl;
+        fout << "----------" << endl;
+        for (int i = 0;i < 10; i++) {
+            fout << "Berth " << i << ": " << berth[i].value << endl;
+        }
+        fout << "----------" << endl;
         fflush(stdout);
     }
     return 0;
