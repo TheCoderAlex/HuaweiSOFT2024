@@ -109,9 +109,8 @@ struct Goods
     int x,y;
     int value;
     int frame;
-    double ratio;
     bool operator<(const Goods& other) const {
-        return ratio < other.ratio;
+        return value < other.value;
     }
     Goods (int frame, int x, int y, int val) {
         this->frame = frame;
@@ -266,48 +265,6 @@ void Init()
     fflush(stdout);
 }
 
-//计算货物的性价比
-double goodsRatio(int value, double distance){
-    if (distance <= 0) return value * 1.0;
-    double rate_time = 0.8;
-
-    //以曼哈顿距离为60为界限
-    int p = 60;
-    if(distance <= p){
-        // 时间价值系数计算
-        rate_time = 0.8 + (1 - 0.8) * (1 - sqrt(1-pow(1-distance / p, 2)));
-    }
-    return value * rate_time / distance;
-}
-
-
-// 为当前生成的货物寻找一个机器人
-void chooseRobot(Goods goods){
-    double maxR = 0;
-    int maxRoboId = -1;
-    // 遍历机器人
-    for(int i = 0; i < B_SIZE; i ++){
-        // 找到当前机器人对应的泊位
-        int berth_id = choice[i];
-        int berth_x = berth[berth_id].x, berth_y = berth[berth_id].y;
-        // 计算当前货物到这个泊点的曼哈顿距离
-        double dist = sqrt(pow(abs(berth_x - goods.x), 2) + pow(abs(berth_y - goods.y), 2));
-        // 计算当前货物对于该泊点的性价比
-        double ratio = goodsRatio(goods.value, dist);
-        if (ratio > maxR){
-            maxR = ratio;
-            maxRoboId = i;
-        }
-    }
-    if(maxRoboId == -1) 
-        fout << "!!!!!!!something wrong with your chooseRobot() !!!\n goods information: ( " 
-        << goods.x << " , " << goods.y << " )\n";
-    else{
-        goods.ratio = maxR;
-        robot[maxRoboId].myGoods.push(goods);
-    }
-}
-
 int Input()
 {
     scanf("%d%d", &frame_id, &money);
@@ -317,9 +274,7 @@ int Input()
         int x, y, val;
         scanf("%d%d%d", &x, &y, &val);
         Goods goods = {frame_id, x, y, val};
-        // goods_queue.push(goods);
-        // 选择一个性价比最高的机器人，然后进入它的货物队列
-        chooseRobot(goods);
+        goods_queue.push(goods);
     }
     for(int i = 0; i < 10; i ++)
     {
@@ -472,29 +427,29 @@ void changeDirection(int rid, int frame) {
     string tmp = robot[rid].directions.back();
     
     //如果剩下三个个方向全是墙就不改变方向
-    int i;
-    for (i = 0;i < 4; ++i) {
-        if (dir[i] == tmp)  continue;
-        if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
-            break;
-    }
-    if (i == 4) return;
+    // int i;
+    // for (i = 0;i < 4; ++i) {
+    //     if (dir[i] == tmp)  continue;
+    //     if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
+    //         break;
+    // }
+    // if (i == 4) return;
 
     // if (frame % 20 == 0) {
-        // robot[rid].mbx = berth[rand() % 10].x;
-        // robot[rid].mby = berth[rand() % 10].y;
+        robot[rid].mbx = berth[rand() % 10].x;
+        robot[rid].mby = berth[rand() % 10].y;
     // }
     
     //随机选择一个可以走的位置
-    int c,x,y,newx,newy;
-    do {
-        c = rand() % 4;
-        x = dx[c], y = dy[c];
-        newx = robot[rid].x + x, newy = robot[rid].y + y;
-    } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+    // int c,x,y,newx,newy;
+    // do {
+    //     c = rand() % 4;
+    //     x = dx[c], y = dy[c];
+    //     newx = robot[rid].x + x, newy = robot[rid].y + y;
+    // } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
 
-    // int newx = robot[rid].x;
-    // int newy = robot[rid].y;
+    int newx = robot[rid].x;
+    int newy = robot[rid].y;
 
     //更新路径
     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
@@ -519,41 +474,32 @@ int main() {
 
         //新增的货物入队 集合到 Input 函数中了
         
-        for (int i = 0; i < 10; ++i) {       
+        for (int i = 0; i < 10; ++i) {   
+            // if (i == 4) // 对map1 的特殊处理
+            //     continue;      
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   
-            // priority_queue<Goods> temp;
-            // //找到空闲的机器人就去分配货物
-            // while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
-            //     Goods tmp = goods_queue.top();
-            //     if (-60 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 60 && -60 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=60) {
-            //         robot[i].myGoods.push(tmp);
-            //         goods_queue.pop();
-            //     } else {
-            //         temp.push(goods_queue.top());
-            //         goods_queue.pop();
-            //     }
-            // }
-            // while (!temp.empty()) {
-            //     goods_queue.push(temp.top());
-            //     temp.pop();
-            // }
-            // if (!robot[i].myGoods.empty()) {
-            //     while (frame_id - robot[i].myGoods.top().frame >= 1000) {
-            //         robot[i].myGoods.pop();
-            //     }
-            //     Goods tmp = robot[i].myGoods.top();
-            //     robot[i].myGoods.pop();
-            //     robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-            //     robot[i].mbx = tmp.x;
-            //     robot[i].mby = tmp.y;
-            //     robot[i].goods_value = tmp.value;
-            //     robot[i].status = 1;
-            // }
-
-            //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
-            if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
+            priority_queue<Goods> temp;
+            //找到空闲的机器人就去分配货物
+            while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
+                Goods tmp = goods_queue.top();
+                if (-50 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 50 && -50 <= tmp.y - robot[i].y && tmp.y - robot[i].y <= 50) {
+                    robot[i].myGoods.push(tmp);
+                    goods_queue.pop();
+                } else {
+                    temp.push(goods_queue.top());
+                    goods_queue.pop();
+                }
+            }
+            while (!temp.empty()) {
+                goods_queue.push(temp.top());
+                temp.pop();
+            }
+            if (!robot[i].myGoods.empty()) {
+                while (frame_id - robot[i].myGoods.top().frame >= 1000) {
+                    robot[i].myGoods.pop();
+                }
                 Goods tmp = robot[i].myGoods.top();
                 robot[i].myGoods.pop();
                 robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
