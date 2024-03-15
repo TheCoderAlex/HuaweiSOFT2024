@@ -30,6 +30,11 @@
         "sstream": "cpp",
         "iosfwd": "cpp",
         "functional": "cpp",
-        "unordered_map": "cpp"
+        "unordered_map": "cpp",
+        "random": "cpp",
+        "istream": "cpp",
+        "limits": "cpp",
+        "valarray": "cpp",
+        "charconv": "cpp"
     }
 }
