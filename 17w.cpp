@@ -170,7 +170,7 @@ double goodsRatio(int value, double distance){
     double rate_time = 0.8;
 
     //以曼哈顿距离为60为界限
-    int p = 90;
+    int p = 100;
     if(distance <= p){
         // 时间价值系数计算
         rate_time = 0.8 + (1 - 0.8) * (1 - sqrt(1-pow(1-distance / p, 2)));

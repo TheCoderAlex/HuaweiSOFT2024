@@ -1,0 +1,6 @@
+# 忽略所有.exe文件
+*.exe
+
+# 忽略特定的文件
+log.txt
+out.txt
