@@ -469,32 +469,32 @@ void pullGoods(int robot_id){
 }
 
 void changeDirection(int rid, int frame) {
-    // string tmp = robot[rid].directions.back();
+    string tmp = robot[rid].directions.back();
     
-    // //如果剩下三个个方向全是墙就不改变方向
-    // int i;
-    // for (i = 0;i < 4; ++i) {
-    //     if (dir[i] == tmp)  continue;
-    //     if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
-    //         break;
-    // }
-    // if (i == 4) return;
+    //如果剩下三个个方向全是墙就不改变方向
+    int i;
+    for (i = 0;i < 4; ++i) {
+        if (dir[i] == tmp)  continue;
+        if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
+            break;
+    }
+    if (i == 4) return;
 
     // if (frame % 20 == 0) {
-        robot[rid].mbx = berth[rand() % 10].x;
-        robot[rid].mby = berth[rand() % 10].y;
+        // robot[rid].mbx = berth[rand() % 10].x;
+        // robot[rid].mby = berth[rand() % 10].y;
     // }
     
     //随机选择一个可以走的位置
-    // int c,x,y,newx,newy;
-    // do {
-    //     c = rand() % 4;
-    //     x = dx[c], y = dy[c];
-    //     newx = robot[rid].x + x, newy = robot[rid].y + y;
-    // } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+    int c,x,y,newx,newy;
+    do {
+        c = rand() % 4;
+        x = dx[c], y = dy[c];
+        newx = robot[rid].x + x, newy = robot[rid].y + y;
+    } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
 
-    int newx = robot[rid].x;
-    int newy = robot[rid].y;
+    // int newx = robot[rid].x;
+    // int newy = robot[rid].y;
 
     //更新路径
     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
@@ -514,7 +514,8 @@ int main() {
         //第一帧以及每500帧操作一下船
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
-        boatAction(frame_id);
+        if (frame >= 700)
+            boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
