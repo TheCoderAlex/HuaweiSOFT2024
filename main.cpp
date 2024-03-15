@@ -367,11 +367,12 @@ int main() {
         //第一帧以及每500帧操作一下船
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
-        boatAction(frame_id);
+        if (frame >= 700)
+            boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
-        for (int i = 0; i < 10; ++i) {         
+        for (int i = 0; i < 10; ++i) {       
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   
@@ -379,7 +380,7 @@ int main() {
             //找到空闲的机器人就去分配货物
             while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
                 Goods tmp = goods_queue.top();
-                if (-40 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 40 && -40 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=40) {
+                if (-60 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 60 && -60 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=60) {
                     robot[i].myGoods.push(tmp);
                     goods_queue.pop();
                 } else {

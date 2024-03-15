@@ -1,1 +1,1 @@
-.\PreliminaryJudge.exe -d log.txt -m maps\map1.txt .\Demo\main.exe
+.\PreliminaryJudge.exe -d log.txt -m maps\map-3.8.txt .\Demo\main.exe
