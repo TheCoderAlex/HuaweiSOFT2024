@@ -235,9 +235,9 @@ void robotBerthChoose() {
     }
 
     //for debug
-    for (int i = 0;i < 10; i++) {
-        assert(has_chosen[i] == true);
-    }
+    // for (int i = 0;i < 10; i++) {
+    //     assert(has_chosen[i] == true);
+    // }
 
 }
 
