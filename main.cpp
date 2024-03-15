@@ -262,21 +262,23 @@ void changeDirection(int rid, int frame) {
     //     x = dx[c], y = dy[c];
     //     newx = robot[rid].x + x, newy = robot[rid].y + y;
     // } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+
     int newx = robot[rid].x;
     int newy = robot[rid].y;
 
     //更新路径
     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
-    // if (!t.empty()) {
+    if (!t.empty()) {
         //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
-    robot[rid].directions = t;
+        robot[rid].directions = t;
     // if (!t.empty())
     //     robot[rid].directions.push_back(dir[c]);
-    // }
+    }
 }
 
 int main() {
     Init();
+    srand((unsigned)time(NULL));
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
         //第一帧以及每500帧操作一下船
@@ -295,9 +297,6 @@ int main() {
             while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
                 Goods tmp = goods_queue.top();
                 if (-40 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 40 && -40 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=40) {
-
-                    cout << i <<" : 我又被分配了一个新的货物！" << endl;
-
                     robot[i].myGoods.push(tmp);
                     goods_queue.pop();
                 } else {
@@ -310,9 +309,6 @@ int main() {
                 temp.pop();
             }
             if (!robot[i].myGoods.empty()) {
-
-                cout << i << "我现在有" << robot[i].myGoods.size() << "个待拿取货物" << endl;
-
                 while (frame_id - robot[i].myGoods.top().frame >= 1000) {
                     robot[i].myGoods.pop();
                 }
@@ -335,12 +331,8 @@ int main() {
 
             //带着货物碰撞
             if (robot[i].st == 0 && robot[i].has_goods) {
-<<<<<<< HEAD
-                changeDirection(i, frame_id);
-=======
                 //changeDirection(i, frame_id);
                 has_cracked[i] = 1;
->>>>>>> ce04179e94f548456c74b8a671dca6b0820628ea
                 continue;
             }
 

@@ -144,7 +144,7 @@ const vector<pair<int, int>> directions{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
 int currentPos[10];    //当前机器人位置集合
 int avoidto[10];   //key对value执行了碰撞避免
 bool hasAvoid[10];  //当前回合那些机器人执行了避让，接下来不再执行任何操作
-int choice[10] = {4,3,2,7,5,1,6,0,9,8};
+int choice[10] = {0,1,2,3,4,5,6,7,8,9};
 
 vector<int> dist(maxn, INF);    //临时距离
 vector<int> pre(maxn, -1);      //临时路径
@@ -446,11 +446,7 @@ void avoidCollision() {
                     n = pos2xy(newpos);
                 } while (newpos == p || mp[n.first][n.second] == '#' || mp[n.first][n.second] == '*');
                 move(i,newpos,now);
-<<<<<<< HEAD
-                avoidto[i] = j, hasAvoid[i] = 1;
-=======
                 avoidto[i] = j, hasAvoid[i] = 1;   
->>>>>>> ce04179e94f548456c74b8a671dca6b0820628ea
             } else {
                 //朝着货物方向走一格
                 int ans = -1;
