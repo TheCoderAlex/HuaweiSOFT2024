@@ -83,7 +83,7 @@ struct Berth
     bool flag;
     int num; //计算当前泊位拥有的货物数量
     Berth () {
-        flag = true;
+        flag = false;
     }
 }berth[B_SIZE];
 
@@ -91,8 +91,9 @@ struct Boat
 {
     /*
     shipedFrame 表示船在第几帧进入的港口
+    num 表示 船当前装了多少货物
     */
-    int shipedFrame, id, status;
+    int shipedFrame, id, status, num, myLastBerth;
     void ship(int shipId, int berthId) {
         printf("ship %d %d\n", shipId, berthId);
     }
@@ -152,6 +153,10 @@ void Init()
         berthid[{berth[id].x,berth[id].y}] = id;    //berth坐标到id的映射
     }
     scanf("%d", &boat_capacity);
+    
+    fout << "这一轮的 船容量 为: " << boat_capacity << "\n";
+    fout << "######################\n";
+    
     char okk[100];
     scanf("%s", okk);
     printf("OK\n");
@@ -181,10 +186,26 @@ int Input()
 }
 
 bool boatLastChance (int frameID, int boatID) {
-    if (boat[boatID].id != -1 && boat[boatID].status == 1) {
+    if (boat[boatID].id != -1 && boat[boatID].status != 0) {
         return (15000 - frameID == berth[boat[boatID].id].time);
+    } else if (boat[boatID].id != -1 && boat[boatID].status == 0) {
+        return (15000 - frameID == berth[boat[boatID].myLastBerth].time);
     }
     return false;
+}
+
+// 找到拥有货物数量最多的泊位
+int getMaxGoodsBerthID () {
+    int maxBerthID = 0;
+    for (int i = 1; i < 10; i++) {
+        if (berth[i].flag)
+            maxBerthID = (berth[maxBerthID].num > berth[i].num) ? maxBerthID : i;
+    }
+    return maxBerthID;
+}
+
+bool isBoatFull (int boatID) {
+    return boat[boatID].num == boat_capacity;
 }
 
 void boatAction (int frameID) {
@@ -196,33 +217,64 @@ void boatAction (int frameID) {
         boat.id: id is the berth id; -1 means virtual point.
     */
     for (int i = 0; i < BOAT_SIZE; i ++) {
+        if (boat[i].id == -1) {
+            fout << "Boat " << i << " is going / at virtual point ! My Status is: " << boat[i].status << '\n';
+        }
+        if (isBoatFull(i)) {
+            boat[i].go(i);
+            boat[i].num = 0;
+            continue;
+        }
+        
         // 判断是不是最后一次送货机会
         if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
             boat[i].go(i);
             //取出港口中的货物
+            fout << "!!!!!!!!!!!!Boat " << i << " now is the last chance : Berth time is " 
+            << berth[boat[i].id].time << " Status is " << boat[i].status 
+            << " Now the frame is " << frameID << "I have " << boat[i].num << "Goods\n";
             continue;
         }
 
         if (boat[i].status == 0)
             continue;
+        if (boat[i].status == 2) {
+            int berthID = getMaxGoodsBerthID();
+            if (berthID == boat[i].id)
+                boat[i].shipedFrame += 1;
+            else {
+                boat[i].ship(i, berthID);
+                boat[i].shipedFrame = frameID + berth[berthID].time;
+            }
+        }
         if (boat[i].id == -1 && boat[i].status != 0) {
-            int berthID = 2 * i + rand() % 2;
+            int berthID = getMaxGoodsBerthID();
             boat[i].ship(i, berthID);
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
 
             // 如果 此时泊位的货物数量小于泊位每帧装卸速度，那就直接讲 泊位num 赋值为0,否则就让让 nun - 装卸速度 velocity
+            // 如果 船当前剩余容量小于泊位装卸速度 那么这一帧 最多装我还差的量
             if (berth[boat[i].id].num < berth[boat[i].id].velocity) {
+                boat[i].num += berth[boat[i].id].num;
                 berth[boat[i].id].num = 0;
+            } else if (boat_capacity - boat[i].num < berth[boat[i].id].velocity) {
+                boat[i].num = boat_capacity;
+                berth[boat[i].id].num -= (boat_capacity - boat[i].num);
             } else {
+                boat[i].num += berth[boat[i].id].velocity;
                 berth[boat[i].id].num -= berth[boat[i].id].velocity;
             }
             
-            // 理想情况下 最快的装满货时间
-            if (frameID - boat[i].shipedFrame >= boat_capacity * 1.5 / berth[boat[i].id].velocity) {
-                boat[i].go(i);
+            // 如果我把这个港口装空了 我就找下一个
+            if (!isBoatFull(i) && berth[boat[i].id].num == 0) {
+                boat[i].myLastBerth = boat[i].id;
+                int berthID = getMaxGoodsBerthID();
+                boat[i].ship(i, berthID);
+                boat[i].shipedFrame = frameID + 500;
             }
         }
+        fout << "Boat: " << i << " Status is " << boat[i].status << " Now is at " << boat[i].id <<"\n";
     }
 }
 
