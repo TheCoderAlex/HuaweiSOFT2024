@@ -81,7 +81,7 @@ struct Berth
     int time;
     int velocity;
     bool flag;
-    int value; //计算当前泊位拥有的货物价值
+    int num; //计算当前泊位拥有的货物数量
     Berth () {
         flag = true;
     }
@@ -200,9 +200,6 @@ void boatAction (int frameID) {
         if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
             boat[i].go(i);
             //取出港口中的货物
-            int out = (berth[boat[i].id].value >= boat_capacity) ? boat_capacity : berth[boat[i].id].value;
-            berth[boat[i].id].value -= out;
-
             continue;
         }
 
@@ -213,6 +210,14 @@ void boatAction (int frameID) {
             boat[i].ship(i, berthID);
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
+
+            // 如果 此时泊位的货物数量小于泊位每帧装卸速度，那就直接讲 泊位num 赋值为0,否则就让让 nun - 装卸速度 velocity
+            if (berth[boat[i].id].num < berth[boat[i].id].velocity) {
+                berth[boat[i].id].num = 0;
+            } else {
+                berth[boat[i].id].num -= berth[boat[i].id].velocity;
+            }
+            
             // 理想情况下 最快的装满货时间
             if (frameID - boat[i].shipedFrame >= boat_capacity * 1.5 / berth[boat[i].id].velocity) {
                 boat[i].go(i);
@@ -247,8 +252,8 @@ void pullGoods(int robot_id){
 
     //增加泊位的货物
     int bid = berthid[{robot[robot_id].mbx,robot[robot_id].mby}];
-    berth[bid].value += robot[robot_id].goods_value;
-    fout << "######### " << robot_id << " pull goods in (" << robot[robot_id].x << "," <<robot[robot_id].y << ") its berth is (" << robot[robot_id].mbx << "," <<robot[robot_id].mby << ")\n";
+    berth[bid].num += 1;
+    fout << "######### " << robot_id << " pull a goods in (" << robot[robot_id].x << "," <<robot[robot_id].y << ") its berth is (" << robot[robot_id].mbx << "," <<robot[robot_id].mby << ")\n";
 
     printf("pull %d\n", robot_id);
 }
@@ -405,7 +410,7 @@ int main() {
         fout << "frame_id: " << frame_id << endl;
         fout << "----------" << endl;
         for (int i = 0;i < 10; i++) {
-            fout << "Berth " << i << ": " << berth[i].value << endl;
+            fout << "Berth " << i << ": " << berth[i].num << endl;
         }
         fout << "----------" << endl;
         fflush(stdout);
