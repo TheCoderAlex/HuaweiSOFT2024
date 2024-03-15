@@ -35,6 +35,7 @@
         "istream": "cpp",
         "limits": "cpp",
         "valarray": "cpp",
-        "charconv": "cpp"
+        "charconv": "cpp",
+        "cmath": "cpp"
     }
 }
