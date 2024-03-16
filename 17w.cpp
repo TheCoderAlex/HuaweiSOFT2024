@@ -27,7 +27,6 @@ int k;
 int dx[4] = {0, 1, -1, 0};
 int dy[4] = {-1, 0, 0, 1};
 string dir[4] = {"1", "3", "2", "0"};
-map<string, string> turnDir = {{"2", "3"},{"3", "1"}, {"1", "0"}, {"0", "2"}};
 bool has_cracked[10];
 ofstream fout("out.txt");
 int choice[10] = {0,1,2,3,4,5,6,7,8,9};  //机器人的泊位选择
@@ -443,12 +442,15 @@ void changeDirection_cgBerth(int rid, int frame) {
 
 void changeDirection_turnAround(int rid, int frame) {
     string tmp = robot[rid].directions.back();
+    string turnDir[4] = {"2", "0", "3", "1"};
+    int dx[4] = {-1, 0, 1, 0};
+    int dy[4] = {0, 1, 0, -1};
     
     //如果剩下三个个方向全是墙就不改变方向
     int i;
     int j = 0;
     for (i = 0;i < 4; ++i) {
-        if (dir[i] == tmp)  continue;
+        if (turnDir[i] == tmp)  continue;
         if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
             break;
     }
@@ -456,7 +458,7 @@ void changeDirection_turnAround(int rid, int frame) {
 
     //找到当前方向
     for(j = 0; j < 4; j ++){
-        if (tmp == dir[j]) break;
+        if (tmp == turnDir[j]) break;
     }
 
     //顺时针找一个能够走的位置
@@ -465,7 +467,7 @@ void changeDirection_turnAround(int rid, int frame) {
         x = dx[c], y = dy[c];    
         newx = robot[rid].x + x, newy = robot[rid].y + y;
         c = (c + 1) % 4;
-    } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+    } while (turnDir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
 
 
     //更新路径
@@ -473,7 +475,7 @@ void changeDirection_turnAround(int rid, int frame) {
     if (!t.empty()) {
         //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
         robot[rid].directions = t;
-        robot[rid].directions.push_back(dir[c]);
+        robot[rid].directions.push_back(turnDir[c]);
     }
 }
 
@@ -581,8 +583,8 @@ int main() {
                 //     }
                 // }
                 if (has_cracked[i] == 1) {
-                    // changeDirectionRandom(i, frame_id);
-                    changeDirection_turnAround(i, frame_id);
+                    changeDirectionRandom(i, frame_id);
+                    // changeDirection_turnAround(i, frame_id);
                     has_cracked[i] = 0;
                 }
                 
