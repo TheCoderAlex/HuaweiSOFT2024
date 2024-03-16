@@ -29,7 +29,7 @@ int dy[4] = {-1, 0, 0, 1};
 string dir[4] = {"1", "3", "2", "0"};
 bool has_cracked[10];
 ofstream fout("out.txt");
-int choice[10] = {0,1,2,3,4,5,6,7,8,9}; //机器人的泊位选择
+int choice[10] = {0,1,2,3,4,5,6,7,8,9};  //机器人的泊位选择
 map<pair<int,int>,int> berthid;   //泊位坐标到id的映射
 
 bool isValid(int x, int y) {
@@ -165,17 +165,24 @@ void Init()
 }
 
 //计算货物的性价比
-double goodsRatio(int value, double distance){
+double goodsRatio(int value, double distance,int robot_id){
+    //添加机器人的负载
+    double load_coefficient = 0.8;
+    double value_coefficient = 0.6;
+    double distance_coefficient = 1.2;
+
+    int load = robot[robot_id].myGoods.size() + 1;
     if (distance <= 0) return value * 1.0;
-    double rate_time = 0.8;
+    
 
     //以曼哈顿距离为60为界限
-    int p = 70;
+    int p = 60;
     if(distance <= p){
         // 时间价值系数计算
-        rate_time = 0.8 + (1 - 0.8) * (1 - sqrt(1-pow(1-distance / p, 2)));
+        value_coefficient = 0.8 + (1 - 0.8) * (1 - sqrt(1-pow(1-distance / p, 2)));
+        distance_coefficient = 0.8;
     }
-    return value * rate_time / distance;
+    return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
 }
 
 
@@ -191,7 +198,7 @@ void chooseRobot(Goods goods){
         // 计算当前货物到这个泊点的曼哈顿距离
         double dist = sqrt(pow(abs(berth_x - goods.x), 2) + pow(abs(berth_y - goods.y), 2));
         // 计算当前货物对于该泊点的性价比
-        double ratio = goodsRatio(goods.value, dist);
+        double ratio = goodsRatio(goods.value, dist, i);
         if (ratio > maxR){
             maxR = ratio;
             maxRoboId = i;
@@ -441,12 +448,17 @@ int main() {
         //第一帧以及每500帧操作一下船
         // if (frame == 1 || frame % 500 == 0)
         // 船的操作， 传入当前帧ID
+        fout << "Robot_Goods_Size: Total: " << k << endl;
+        for (int i = 0;i < 10; ++i) {
+            fout << "[*]Robot " << i << " : " << robot[i].myGoods.size() << endl;
+        }
+        fout << "----------" << endl;
         boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
         for (int i = 0; i < 10; ++i) {    
-            if (i == 4) continue;   
+            // if (i == 4) continue;   
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   

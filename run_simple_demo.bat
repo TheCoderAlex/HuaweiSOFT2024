@@ -1,1 +1,1 @@
-.\PreliminaryJudge.exe -d log.txt -s 234123123 -m maps\map1.txt .\Demo\17w.exe
+.\PreliminaryJudge.exe -d log.txt -m maps\map-3.8.txt .\Demo\17w.exe
