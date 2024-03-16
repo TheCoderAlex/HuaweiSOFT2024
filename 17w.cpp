@@ -492,7 +492,9 @@ int main() {
             fout << "[*]Robot " << i << " : " << robot[i].myGoods.size() << endl;
         }
         fout << "----------" << endl;
-        boatAction(frame_id);
+
+        if (frame > 2000)
+            boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
