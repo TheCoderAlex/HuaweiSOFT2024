@@ -419,6 +419,45 @@ void changeDirection_cgBerth(int rid, int frame) {
     }
 }
 
+void changeDirection_turnAround(int rid, int frame) {
+    string tmp = robot[rid].directions.back();
+    string turnDir[4] = {"2", "0", "3", "1"};
+    int dx[4] = {-1, 0, 1, 0};
+    int dy[4] = {0, 1, 0, -1};
+    
+    //如果剩下三个个方向全是墙就不改变方向
+    int i;
+    int j = 0;
+    for (i = 0;i < 4; ++i) {
+        if (turnDir[i] == tmp)  continue;
+        if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
+            break;
+    }
+    if (i == 4) return;
+
+    //找到当前方向
+    for(j = 0; j < 4; j ++){
+        if (tmp == turnDir[j]) break;
+    }
+
+    //顺时针找一个能够走的位置
+    int c = (j+1) % 4,x,y,newx,newy;
+    do {
+        x = dx[c], y = dy[c];    
+        newx = robot[rid].x + x, newy = robot[rid].y + y;
+        c = (c + 1) % 4;
+    } while (turnDir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
+
+
+    //更新路径
+    vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
+    if (!t.empty()) {
+        //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
+        robot[rid].directions = t;
+        robot[rid].directions.push_back(turnDir[c]);
+    }
+}
+
 int main() {
     Init();
     srand((unsigned)time(NULL));
@@ -432,7 +471,9 @@ int main() {
             fout << "[*]Robot " << i << " : " << robot[i].myGoods.size() << endl;
         }
         fout << "----------" << endl;
-        boatAction(frame_id);
+
+        if (frame > 2000)
+            boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
@@ -529,6 +570,7 @@ int main() {
                 // }
                 if (has_cracked[i] == 1) {
                     changeDirectionRandom(i, frame_id);
+                    // changeDirection_turnAround(i, frame_id);
                     has_cracked[i] = 0;
                 }
                 
