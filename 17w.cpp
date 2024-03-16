@@ -82,6 +82,7 @@ struct Berth
     int velocity;
     bool flag;
     int num; //计算当前泊位拥有的货物数量
+    int value; //计算当前泊位的价值
     Berth () {
         flag = false;
     }
@@ -167,9 +168,9 @@ void Init()
 //计算货物的性价比
 double goodsRatio(int value, double distance,int robot_id){
     //添加机器人的负载
-    double load_coefficient = 0.8;
-    double value_coefficient = 0.6;
-    double distance_coefficient = 1.2;
+    double load_coefficient = 1;
+    double value_coefficient = 0.8;
+    double distance_coefficient = 1;
 
     int load = robot[robot_id].myGoods.size() + 1;
     if (distance <= 0) return value * 1.0;
@@ -179,8 +180,10 @@ double goodsRatio(int value, double distance,int robot_id){
     int p = 60;
     if(distance <= p){
         // 时间价值系数计算
-        value_coefficient = 0.8 + (1 - 0.8) * (1 - sqrt(1-pow(1-distance / p, 2)));
-        distance_coefficient = 0.8;
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1-pow(1-distance / p, 2)));
+        distance_coefficient = 1;
+    } else {
+        distance_coefficient = 1 + (distance - p) / 10;
     }
     return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
 }
@@ -368,6 +371,7 @@ void pullGoods(int robot_id){
     //增加泊位的货物
     int bid = berthid[{robot[robot_id].mbx,robot[robot_id].mby}];
     berth[bid].num += 1;
+    berth[bid].value += robot[robot_id].goods_value;
     fout << "######### " << robot_id << " pull a goods in (" << robot[robot_id].x << "," <<robot[robot_id].y << ") its berth is (" << robot[robot_id].mbx << "," <<robot[robot_id].mby << ")\n";
 
     printf("pull %d\n", robot_id);
@@ -403,40 +407,15 @@ void changeDirectionRandom(int rid, int frame) {
 }
 
 void changeDirection_cgBerth(int rid, int frame) {
-    // string tmp = robot[rid].directions.back();
-    
-    // //如果剩下三个个方向全是墙就不改变方向
-    // int i;
-    // for (i = 0;i < 4; ++i) {
-    //     if (dir[i] == tmp)  continue;
-    //     if (mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '#' && mp[robot[rid].x + dx[i]][robot[rid].y + dy[i]] != '*')
-    //         break;
-    // }
-    // if (i == 4) return;
-
-    // if (frame % 20 == 0) {
-        robot[rid].mbx = berth[rand() % 10].x;
-        robot[rid].mby = berth[rand() % 10].y;
-    // }
-    
-    //随机选择一个可以走的位置
-    // int c,x,y,newx,newy;
-    // do {
-    //     c = rand() % 4;
-    //     x = dx[c], y = dy[c];
-    //     newx = robot[rid].x + x, newy = robot[rid].y + y;
-    // } while (dir[c] == tmp || mp[newx][newy] == '#' || mp[newx][newy] == '*');
-
+    robot[rid].mbx = berth[rand() % 10].x;
+    robot[rid].mby = berth[rand() % 10].y;
     int newx = robot[rid].x;
     int newy = robot[rid].y;
-
     //更新路径
     vector<string> t = BFS(newx,newy,robot[rid].mbx,robot[rid].mby);
     if (!t.empty()) {
         //如果碰巧路径不可达那就等下次碰撞了再选一次，这里不处理
         robot[rid].directions = t;
-    // if (!t.empty())
-    //     robot[rid].directions.push_back(dir[c]);
     }
 }
 
@@ -493,6 +472,11 @@ int main() {
 
             //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
+                // 把前 8 个超时的货物 丢弃掉
+                // int flag = 8;
+                // while (flag > 0 && frame_id - robot[i].myGoods.top().frame >= 1000) {
+                //     robot[i].myGoods.pop();
+                // }
                 Goods tmp = robot[i].myGoods.top();
                 robot[i].myGoods.pop();
                 robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
@@ -571,7 +555,7 @@ int main() {
         fout << "frame_id: " << frame_id << endl;
         fout << "----------" << endl;
         for (int i = 0;i < 10; i++) {
-            fout << "Berth " << i << ": " << berth[i].num << endl;
+            fout << "Berth " << i << ": " << berth[i].num << " 累计 Value is" << berth[i].value<< endl;
         }
         fout << "----------" << endl;
         fflush(stdout);
