@@ -493,7 +493,7 @@ int main() {
         }
         fout << "----------" << endl;
 
-        if (frame > 2000)
+        if (frame > 7000)
             boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
