@@ -80,6 +80,49 @@ vector<string> BFS(int startX, int startY, int endX, int endY) {
     return {};
 }
 
+const int N = 200;
+const int maxn = N * N;
+const int INF = 0x3f3f3f3f;
+
+vector<int> dist(maxn, INF);
+vector<vector<int>> minlen(10,vector<int>(maxn,INF));
+ const vector<pair<int, int>> directions{{1, 0}, {-1, 0}, {0, 1}, {0, -1}};
+
+void dijkstra(int start) {
+    priority_queue<pair<int, int>, vector<pair<int, int>>, greater<>> pq;
+    vector<bool> vis(maxn,false);
+
+    fill(dist.begin(), dist.end(), INF);
+
+    dist[start] = 0;
+    pq.push({0, start});
+
+    while (!pq.empty()) {
+        auto [cost, pos] = pq.top(); pq.pop();
+
+        //cout << "now in point " << pos << endl;
+        if (vis[pos])   continue;
+        vis[pos] = 1;
+
+        if (cost > dist[pos]) continue;
+
+        int x = pos / N, y = pos % N;
+
+        // 检查四个方向
+        for (auto& dir : directions) {
+            int newX = x + dir.first, newY = y + dir.second;
+            if (newX >= 0 && newX < N && newY >= 0 && newY < N && mp[newX][newY] != '#' && mp[newX][newY] != '*') {
+                int newIndex = newX * N + newY;
+                int newCost = cost + 1;
+                if (newCost < dist[newIndex]) {
+                    dist[newIndex] = newCost;
+                    pq.push({newCost, newIndex});
+                }
+            }
+        }
+    }
+}
+
 struct Berth
 {
     /* 泊位 */
@@ -166,6 +209,11 @@ void Init()
     fout << "这一轮的 船容量 为: " << boat_capacity << "\n";
     fout << "######################\n";
     
+    for (int i = 0; i < 10; ++i) {
+        dijkstra(berth[i].x * 200 + berth[i].y);
+        minlen[i] = dist;
+    }
+
     char okk[100];
     scanf("%s", okk);
     printf("OK\n");
@@ -173,24 +221,24 @@ void Init()
 }
 
 //计算货物的性价比
-double goodsRatio(int value, double distance,int robot_id){
+double goodsRatio(int value, int distance,int robot_id){
     //添加机器人的负载
-    double load_coefficient = 1;
+    double load_coefficient = 0.8;
     double value_coefficient = 0.8;
-    double distance_coefficient = 1.0;
+    double distance_coefficient = 1;
 
     int load = robot[robot_id].myGoods.size() + 1;
-    if (distance <= 0) return value * 1.0;
+    if (distance <= 0 || distance == INF) return value * 1.0;
     
 
-    //以曼哈顿距离为60为界限
+    //以距离为60为界限
     int p = 60;
     if(distance <= p){
         // 时间价值系数计算
-        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1-pow(1-distance / p, 2)));
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1-pow(1- (double) distance / p, 2)));
         distance_coefficient = 1;
     } else {
-        distance_coefficient = 1 + (distance - p) / 10;
+         distance_coefficient = 1 + (distance - p) / 10.0;
     }
     return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
 }
@@ -200,7 +248,7 @@ double goodsRatio(int value, double distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 1.5;
+    double threshold = 0.5;
     // 遍历机器人
     fout << "[^]goods_sum = " << goods_sum << " \n";
     fout << "[^]goods_ignore = " << goods_ignore << " \n";
@@ -209,7 +257,7 @@ void chooseRobot(Goods goods){
         int berth_id = choice[i];
         int berth_x = berth[berth_id].x, berth_y = berth[berth_id].y;
         // 计算当前货物到这个泊点的曼哈顿距离
-        double dist = sqrt(pow(abs(berth_x - goods.x), 2) + pow(abs(berth_y - goods.y), 2));
+        int dist = minlen[berth_id][goods.x * 200 + goods.y];
         // 计算当前货物对于该泊点的性价比
         double ratio = goodsRatio(goods.value, dist, i);
         if (ratio > maxR){
@@ -520,7 +568,7 @@ int main() {
         }
         fout << "----------" << endl;
 
-        if (frame > 7000)
+        if (frame > 6000)
             boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了

@@ -34,6 +34,7 @@ bool has_cracked[10];   // 机器人是否发生碰撞
 int boat_capacity;
 int money,frame_id;
 int k;
+int goods_sum = 0, goods_ignore = 0;
 int choice[10] = {0,1,2,3,4,5,6,7,8,9}; // 机器人的泊位选择
 map<pair<int,int>,int> berthid;   // 泊位坐标到id的映射
 ofstream fout("out.txt");   // 调试输出
@@ -210,7 +211,10 @@ double goodsRatio(int value, double distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
+    double threshold = 1.5;
     // 遍历机器人
+    fout << "[^]goods_sum = " << goods_sum << " \n";
+    fout << "[^]goods_ignore = " << goods_ignore << " \n";
     for(int i = 0; i < B_SIZE; i ++){
         // 找到当前机器人对应的泊位
         int berth_id = choice[i];
@@ -223,11 +227,14 @@ void chooseRobot(Goods goods){
             maxR = ratio;
             maxRoboId = i;
         }
+        fout << "[^^^^^]goods_ratio for robot " << i << " is " << ratio << "\n";
     }
     if(maxRoboId == -1) 
         fout << "!!!!!!!something wrong with your chooseRobot() !!!\n goods information: ( " 
         << goods.x << " , " << goods.y << " )\n";
-    else{
+    else if(maxR < threshold){
+        goods_ignore ++;
+    }else{
         goods.ratio = maxR;
         robot[maxRoboId].myGoods.push(goods);
     }
@@ -241,6 +248,7 @@ int Input()
 {
     scanf("%d%d", &frame_id, &money);
     scanf("%d", &k);
+    goods_sum += k;
     for(int i = 0; i < k; i ++)
     {
         int x, y, val;
@@ -540,6 +548,11 @@ int main() {
             // 当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
                 Goods tmp = robot[i].myGoods.top();
+                // int cnt = 0;
+                // if (frame_id - tmp.frame > 1000 - sqrt(pow(abs(robot[i].x - tmp.x), 2) + pow(abs(robot[i].y - tmp.y), 2))){
+                //     robot[i].myGoods.pop();
+                //     tmp = robot[i].myGoods.top();
+                // }
                 robot[i].myGoods.pop();
                 robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
                 robot[i].mbx = tmp.x;
