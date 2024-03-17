@@ -132,6 +132,7 @@ struct Berth
     bool flag;
     int num; //计算当前泊位拥有的货物数量
     int value; //计算当前泊位的价值
+    queue<int> goodsList;
     Berth () {
         flag = false;
     }
@@ -326,6 +327,20 @@ int getMaxGoodsBerthID () {
     return BerthID;
 }
 
+// 找到拥有最高价值的泊位
+int getMaxValueBerthID () {
+    int maxValue = 0;
+    int BerthID = -1;
+    for (int i = 0; i < 10; i++) {
+        if (!berth[i].flag)
+            if (berth[i].value >= maxValue) {
+                maxValue = berth[i].value;
+                BerthID = i;
+            }
+    }
+    return BerthID;
+}
+
 bool isBoatFull (int boatID) {
     return boat[boatID].num == boat_capacity;
 }
@@ -363,7 +378,7 @@ void boatAction (int frameID) {
         if (boat[i].status == 0)
             continue;
         if (boat[i].status == 2) {
-            int berthID = getMaxGoodsBerthID();
+            int berthID = getMaxValueBerthID();
             if (berthID == boat[i].id)
                 boat[i].shipedFrame += 1;
             else {
@@ -372,7 +387,7 @@ void boatAction (int frameID) {
             }
         }
         if (boat[i].id == -1 && boat[i].status != 0) {
-            int berthID = getMaxGoodsBerthID();
+            int berthID = getMaxValueBerthID();
             fout << "$$$$$$$$$ Boat " << i << " chooses the " << berthID << endl;
             boat[i].myLastBerth = berthID;
             boat[i].ship(i, berthID);
@@ -380,23 +395,39 @@ void boatAction (int frameID) {
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
             boat[i].myLastBerth = boat[i].id;
-            // 如果 此时泊位的货物数量小于泊位每帧装卸速度，那就直接讲 泊位num 赋值为0,否则就让让 nun - 装卸速度 velocity
+            // 如果 此时泊位的货物数量小于泊位每帧装卸速度，那就直接将 泊位num 赋值为0,否则就让让 nun - 装卸速度 velocity
             // 如果 船当前剩余容量小于泊位装卸速度 那么这一帧 最多装我还差的量
+            // load_num 为装货数量
             if (berth[boat[i].id].num < berth[boat[i].id].velocity) {
                 boat[i].num += berth[boat[i].id].num;
                 berth[boat[i].id].num = 0;
+                berth[boat[i].id].value = 0;
+                while (!berth[boat[i].id].goodsList.empty())
+                    berth[boat[i].id].goodsList.pop();
             } else if (boat_capacity - boat[i].num < berth[boat[i].id].velocity) {
+                int load_num = boat_capacity - boat[i].num;
                 boat[i].num = boat_capacity;
-                berth[boat[i].id].num -= (boat_capacity - boat[i].num);
+                berth[boat[i].id].num -= load_num;
+                while (load_num > 0) {
+                    load_num--;
+                    berth[boat[i].id].value -= berth[boat[i].id].goodsList.front();
+                    berth[boat[i].id].goodsList.pop();
+                }
             } else {
                 boat[i].num += berth[boat[i].id].velocity;
                 berth[boat[i].id].num -= berth[boat[i].id].velocity;
+                int load_num = berth[boat[i].id].velocity;
+                while (load_num > 0) {
+                    load_num--;
+                    berth[boat[i].id].value -= berth[boat[i].id].goodsList.front();
+                    berth[boat[i].id].goodsList.pop();
+                }
             }
             
             // 如果我把这个港口装空了 我就找下一个
             if (!isBoatFull(i) && berth[boat[i].id].num == 0) {
                 berth[boat[i].myLastBerth].flag = false;
-                int berthID = getMaxGoodsBerthID();
+                int berthID = getMaxValueBerthID();
                 fout << "$$$$$$$$$ Boat " << i << " chooses the " << berthID << endl;
                 boat[i].ship(i, berthID);
                 berth[berthID].flag = true;
@@ -435,6 +466,7 @@ void pullGoods(int robot_id){
     int bid = berthid[{robot[robot_id].mbx,robot[robot_id].mby}];
     berth[bid].num += 1;
     berth[bid].value += robot[robot_id].goods_value;
+    berth[bid].goodsList.push(robot[robot_id].goods_value);
     fout << "######### " << robot_id << " pull a goods in (" << robot[robot_id].x << "," <<robot[robot_id].y << ") its berth is (" << robot[robot_id].mbx << "," <<robot[robot_id].mby << ")\n";
     total_berth_num += 1;
     total_berth_value += robot[robot_id].goods_value;
