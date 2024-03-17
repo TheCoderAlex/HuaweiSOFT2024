@@ -21,6 +21,10 @@ char mp[M_SIZE][M_SIZE];
 int boat_capacity;
 int money,frame_id;
 int k;
+int total_k = 0 ;   //用于统计一局一共会给多少货物
+int total_val = 0; //用于统计一局一共会给多少米
+int total_berth_value = 0;
+int total_berth_num = 0;
 
 // queue<pair<int, int>> goods_queue;
 
@@ -225,10 +229,12 @@ int Input()
         int x, y, val;
         scanf("%d%d%d", &x, &y, &val);
         Goods goods = {frame_id, x, y, val};
+        total_val += val;
         // goods_queue.push(goods);
         // 选择一个性价比最高的机器人，然后进入它的货物队列
         chooseRobot(goods);
     }
+    total_k += k;
     for(int i = 0; i < 10; i ++)
     {
         scanf("%d%d%d%d", &robot[i].has_goods, &robot[i].x, &robot[i].y, &robot[i].st);
@@ -373,7 +379,8 @@ void pullGoods(int robot_id){
     berth[bid].num += 1;
     berth[bid].value += robot[robot_id].goods_value;
     fout << "######### " << robot_id << " pull a goods in (" << robot[robot_id].x << "," <<robot[robot_id].y << ") its berth is (" << robot[robot_id].mbx << "," <<robot[robot_id].mby << ")\n";
-
+    total_berth_num += 1;
+    total_berth_value += robot[robot_id].goods_value;
     printf("pull %d\n", robot_id);
 }
 
@@ -599,6 +606,9 @@ int main() {
         for (int i = 0;i < 10; i++) {
             fout << "Berth " << i << ": " << berth[i].num << " 累计 Value is" << berth[i].value<< endl;
         }
+        fout << "----------" << endl;
+        fout << "?????total K is: " << total_k << "total value: " << total_val << endl;
+        fout << "?????We get total K is: " << total_berth_num << "total value: " << total_berth_value << endl;
         fout << "----------" << endl;
         fflush(stdout);
     }
