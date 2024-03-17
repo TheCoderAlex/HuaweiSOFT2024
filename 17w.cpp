@@ -169,8 +169,8 @@ void Init()
 //计算货物的性价比
 double goodsRatio(int value, double distance,int robot_id){
     //添加机器人的负载
-    double load_coefficient = 0.8;
-    double value_coefficient = 0.6;
+    double load_coefficient = 1;
+    double value_coefficient = 0.8;
     double distance_coefficient = 1.0;
 
     int load = robot[robot_id].myGoods.size() + 1;
