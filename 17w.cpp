@@ -279,6 +279,7 @@ int getMaxGoodsBerthID () {
     return BerthID;
 }
 
+// 找到拥有最高价值的泊位
 int getMaxValueBerthID () {
     int maxValue = 0;
     int BerthID = -1;
