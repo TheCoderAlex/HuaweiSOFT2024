@@ -1,6 +1,11 @@
 # 忽略所有.exe文件
 *.exe
+Demo/*.exe
 
 # 忽略特定的文件
 log.txt
 out.txt
+
+# 忽略文件夹
+.idea/
+.vscode/
