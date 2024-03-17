@@ -2,7 +2,7 @@
  * @Author: thecoderalex tangzf2001@126.com
  * @Date: 2024-03-12 14:34:00
  * @LastEditors: thecoderalex tangzf2001@126.com
- * @LastEditTime: 2024-03-17 11:33:10
+ * @LastEditTime: 2024-03-17 11:54:39
  * @FilePath: \HuaweiSOFT\main.cpp
  * @Description: 新增机器人负载参数，考虑机器人任务分配均匀；新增船舶开始时间判断
  * 
@@ -110,7 +110,7 @@ bool isValid(int x, int y) {
  * @param {int} startX  起点横坐标
  * @param {int} startY  起点纵坐标
  * @param {int} endX    终点横坐标
- * @param {int} endY    重点纵坐标
+ * @param {int} endY    终点纵坐标
  * @return {vector<string>} 倒序储存起点到重点的每一步的方向，即第一步在vector的尾部
  */
 vector<string> BFS(int startX, int startY, int endX, int endY) {
