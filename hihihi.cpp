@@ -683,15 +683,16 @@ int main() {
                     // 如果队列为空，说明该robot对应的港口没有有效货物，则让他去离他最近且有货物的地方帮忙。
                     // 1. 循环判断距离他最近的港口序列，如果该港口的货物数量大于10，就让他去帮忙
                     int j = 1;
+                    int n = 6;
                     int nearId = nearRobot[i][j];
                     
-                    while(j < 6 && robot[nearId].myGoods.size() <= 10){
+                    while(j < n && robot[nearId].myGoods.size() <= 10){
                         nearId = nearRobot[i][j];
                         fout << "robot " << nearId << "myGoods.size(): "<< robot[nearId].myGoods.size() << endl;
                         j++;
                     }
-                    //j >= BSIZE说明距离最近的前五个港口都没有数量大于10，这种时候就应该什么也不做
-                    if (j < 6){
+                    //j >= BSIZE说明距离最近的前n个港口都没有数量大于10，这种时候就应该什么也不做
+                    if (j < n){
                         // 2. 从该港口对应的robot的队列里找货物
                         Goods tmp = robot[nearId].myGoods.top();
                         robot[nearId].myGoods.pop();
