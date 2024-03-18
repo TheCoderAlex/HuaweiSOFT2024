@@ -229,7 +229,7 @@ double goodsRatio(int value, int distance,int robot_id){
     double distance_coefficient = 1.2;
 
     int load = robot[robot_id].myGoods.size() + 1;
-    if (distance <= 0 || distance == INF) return value * 1.0;
+    if (distance <= 0) return value * 1.0;
     
 
     //以距离为60为界限
@@ -249,7 +249,7 @@ double goodsRatio(int value, int distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0.5;
+    double threshold = 0.1;
     // 遍历机器人
     fout << "[^]goods_sum = " << goods_sum << " \n";
     fout << "[^]goods_ignore = " << goods_ignore << " \n";
@@ -262,8 +262,8 @@ void chooseRobot(Goods goods){
         // 计算当前货物对于该泊点的性价比
         double ratio = goodsRatio(goods.value, dist, i);
         // 如果robot的货物队列中的货物太多了，这里是多于50，那么判断当前的货物价值是不是大于这个队列中的最大值，大于才入队，小于就不入
-        if (robot[i].myGoods.size() >= 50 && robot[i].myGoods.top().ratio >= ratio )
-            continue;
+        // if (robot[i].myGoods.size() >= 50 && robot[i].myGoods.top().ratio >= ratio )
+        //     continue;
         if (ratio > maxR){
             maxR = ratio;
             maxRoboId = i;
@@ -578,7 +578,7 @@ int main() {
         //新增的货物入队 集合到 Input 函数中了
         
         for (int i = 0; i < 10; ++i) {    
-            // if (i == 4) continue;   
+            // if (i == 3) continue;   
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   
@@ -612,8 +612,8 @@ int main() {
             // }
             //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
-                // 把前 3 个超时的货物 丢弃掉
-                int flag = 3;
+                // 把前 1 个超时的货物 丢弃掉
+                int flag = 1;
                 while (flag > 0 && frame_id - robot[i].myGoods.top().frame >= 1000 && !robot[i].myGoods.empty()) {
                     robot[i].myGoods.pop();
                     flag--;
