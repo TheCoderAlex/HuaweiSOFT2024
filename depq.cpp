@@ -48,6 +48,13 @@ public:
         }
     }
 
+    unsigned int size() {
+        if (data.empty()) {
+            return (unsigned) 0;
+        } else
+            return data.size();
+    }
+    
     bool isEmpty() const {
         return data.empty();
     }
