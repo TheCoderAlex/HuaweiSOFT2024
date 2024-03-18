@@ -241,7 +241,7 @@ double goodsRatio(int value, int distance,int robot_id){
     } else {
          distance_coefficient = 1 + (distance - p) / 10.0;
     }
-    return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
+    return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load) + 0.1 * (robot[robot_id].waiting_frame + 1);
 }
 
 
@@ -249,7 +249,7 @@ double goodsRatio(int value, int distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0;
+    double threshold = 0.5;
     // 遍历机器人
     fout << "[^]goods_sum = " << goods_sum << " \n";
     fout << "[^]goods_ignore = " << goods_ignore << " \n";
@@ -261,6 +261,9 @@ void chooseRobot(Goods goods){
         int dist = minlen[berth_id][goods.x * 200 + goods.y];
         // 计算当前货物对于该泊点的性价比
         double ratio = goodsRatio(goods.value, dist, i);
+        // 如果robot的货物队列中的货物太多了，这里是多于50，那么判断当前的货物价值是不是大于这个队列中的最大值，大于才入队，小于就不入
+        if (robot[i].myGoods.size() >= 50 && robot[i].myGoods.top().ratio >= ratio )
+            continue;
         if (ratio > maxR){
             maxR = ratio;
             maxRoboId = i;
@@ -607,26 +610,27 @@ int main() {
             //     robot[i].goods_value = tmp.value;
             //     robot[i].status = 1;
             // }
-
             //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
                 // 把前 3 个超时的货物 丢弃掉
                 int flag = 3;
-                while (flag > 0 && frame_id - robot[i].myGoods.top().frame >= 1000) {
+                while (flag > 0 && frame_id - robot[i].myGoods.top().frame >= 1000 && !robot[i].myGoods.empty()) {
                     robot[i].myGoods.pop();
                     flag--;
                 }
-                Goods tmp = robot[i].myGoods.top();
-                // while(frame_id - tmp.frame > 1000 - sqrt(pow(abs(robot[i].x - tmp.x), 2) + pow(abs(robot[i].y - tmp.y), 2))){
-                //     robot[i].myGoods.pop();
-                //     tmp = robot[i].myGoods.top();
-                // }
-                robot[i].myGoods.pop();
-                robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-                robot[i].mbx = tmp.x;
-                robot[i].mby = tmp.y;
-                robot[i].goods_value = tmp.value;
-                robot[i].status = 1;
+                if (!robot[i].myGoods.empty()) { 
+                    Goods tmp = robot[i].myGoods.top();
+                    // while(frame_id - tmp.frame > 1000 - sqrt(pow(abs(robot[i].x - tmp.x), 2) + pow(abs(robot[i].y - tmp.y), 2))){
+                    //     robot[i].myGoods.pop();
+                    //     tmp = robot[i].myGoods.top();
+                    // }
+                    robot[i].myGoods.pop();
+                    robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
+                    robot[i].mbx = tmp.x;
+                    robot[i].mby = tmp.y;
+                    robot[i].goods_value = tmp.value;
+                    robot[i].status = 1;
+                }
             }
             
 
@@ -643,6 +647,13 @@ int main() {
                 //changeDirection(i, frame_id);
                 has_cracked[i] = 1;
                 continue;
+            }
+
+            // 根据空闲帧数进行赋值
+            if (robot[i].myGoods.empty()) {
+                robot[i].waiting_frame += 1;
+            } else {
+                robot[i].waiting_frame = 0;
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {
