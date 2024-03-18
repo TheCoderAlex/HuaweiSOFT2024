@@ -135,7 +135,6 @@ struct Berth
     int num; //计算当前泊位拥有的货物数量
     int value; //计算当前泊位的价值
     queue<int> goodsList;
-    priority_queue<Goods> goods;
     Berth () {
         flag = false;
     }
@@ -618,7 +617,7 @@ int main() {
         }
         fout << "----------" << endl;
 
-        if (frame > 7000)
+        if (frame > 6000)
             boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
