@@ -180,6 +180,7 @@ struct Robot
     int goods_value;
     int status; //0 free 1 work 2 collision
     int st;
+    int waiting_frame;
     vector<string> directions;
     priority_queue<Goods> myGoods;
 }robot[10];
@@ -248,7 +249,7 @@ double goodsRatio(int value, int distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0.5;
+    double threshold = 0;
     // 遍历机器人
     fout << "[^]goods_sum = " << goods_sum << " \n";
     fout << "[^]goods_ignore = " << goods_ignore << " \n";
@@ -329,7 +330,7 @@ int getMaxGoodsBerthID () {
 
 // 找到拥有最高价值的泊位
 int getMaxValueBerthID () {
-    int maxValue = 0;
+    int maxValue = -1;
     int BerthID = -1;
     for (int i = 0; i < 10; i++) {
         if (!berth[i].flag)
@@ -568,7 +569,7 @@ int main() {
         }
         fout << "----------" << endl;
 
-        if (frame > 6000)
+        if (frame > 7000)
             boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
@@ -609,11 +610,12 @@ int main() {
 
             //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
-                // 把前 8 个超时的货物 丢弃掉
-                // int flag = 8;
-                // while (flag > 0 && frame_id - robot[i].myGoods.top().frame >= 1000) {
-                //     robot[i].myGoods.pop();
-                // }
+                // 把前 3 个超时的货物 丢弃掉
+                int flag = 3;
+                while (flag > 0 && frame_id - robot[i].myGoods.top().frame >= 1000) {
+                    robot[i].myGoods.pop();
+                    flag--;
+                }
                 Goods tmp = robot[i].myGoods.top();
                 // while(frame_id - tmp.frame > 1000 - sqrt(pow(abs(robot[i].x - tmp.x), 2) + pow(abs(robot[i].y - tmp.y), 2))){
                 //     robot[i].myGoods.pop();
