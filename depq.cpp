@@ -2,9 +2,9 @@
  * @Author: thecoderalex tangzf2001@126.com
  * @Date: 2024-03-18 10:52:26
  * @LastEditors: thecoderalex tangzf2001@126.com
- * @LastEditTime: 2024-03-18 11:02:02
+ * @LastEditTime: 2024-03-18 11:06:06
  * @FilePath: \HuaweiSOFT\depq.cpp
- * @Description: 
+ * @Description: 使用红黑树实现的双端优先队列
  * 
  * Copyright (c) 2024 by 菜就多练, All Rights Reserved. 
  */
