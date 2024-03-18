@@ -1,1 +1,1 @@
-.\PreliminaryJudge.exe -l ERR -d log.txt -m maps\map-3.9.txt .\Demo\main.exe
+.\PreliminaryJudge.exe -l ERR -d log.txt -m maps\map-3.10.txt .\Demo\hihihi.exe
