@@ -295,7 +295,7 @@ double goodsRatio(int value, int distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0.1;
+    double threshold = 1.0;
     // 遍历机器人
     fout << "[^]goods_sum = " << goods_sum << " \n";
     fout << "[^]goods_ignore = " << goods_ignore << " \n";
