@@ -405,10 +405,11 @@ void boatAction_2 (int frameID) {
             continue;
         }
         if (boat_.id == -1 && boat_.status != 0) {
+            fout << " Boat " << boat_.shipId << " is going to " << berth_.berthId << endl;
             boat_.ship(boat_.shipId, berth_.berthId);
             berth_queue.pop();
             boat_.shipedFrame = frameID + berth_.time;
-        } else if (boat_.id != -1 && boat_.id == 1) {
+        } else if (boat_.id != -1 && boat_.status == 1) {
             Berth &b = berth[boat_.id];
             if (b.num < b.velocity) {
                 boat_.num += b.num;
@@ -426,27 +427,27 @@ void boatAction_2 (int frameID) {
                     b.value -= b.goodsList.front();
                     b.goodsList.pop();
                 }
+            } else {
+                Berth &b = berth[boat_.id];
+                boat_.num += b.velocity;
+                b.num -= b.velocity;
+                int load_num = b.velocity;
+                while (load_num > 0) {
+                    load_num--;
+                    b.value -= b.goodsList.front();
+                    b.goodsList.pop();
+                }
             } 
-        } else {
-            Berth &b = berth[boat_.id];
-            boat_.num += b.velocity;
-            b.num -= b.velocity;
-            int load_num = b.velocity;
-            while (load_num > 0) {
-                load_num--;
-                b.value -= b.goodsList.front();
-                b.goodsList.pop();
+            if (boat_.id != -1 && !isBoatFull(boat_.shipId) && berth[boat_.id].num == 0) {
+                Berth &b = berth[boat_.id];
+                Berth berth_ = berth_queue.top();
+                berth_queue.pop();
+                boat_.ship(boat_.shipId,berth_.berthId);
+                boat_.shipedFrame = frameID + 500;
+                berth_queue.push(b);
             }
         }
-        
-        if (boat_.id != -1 && !isBoatFull(boat_.shipId) && berth[boat_.id].num == 0) {
-            Berth &b = berth[boat_.id];
-            Berth berth_ = berth_queue.top();
-            berth_queue.pop();
-            boat_.ship(boat_.shipId,berth_.berthId);
-            boat_.shipedFrame = frameID + 500;
-            berth_queue.push(b);
-        }
+        fout << "+++++Boat: " << boat_.shipId << " Status is " << boat_.status << " Now is at " << boat_.id <<"\n";
     }
     while (!berth_queue.empty()) 
         berth_queue.pop();
