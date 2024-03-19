@@ -224,13 +224,7 @@ void Init()
     for (int i = 0; i < B_SIZE; i ++){
         int c = 0;
         for (int j = 0; j < B_SIZE; j ++){
-            int berthId = choice[c];
-            int x = berth[berthId].x, y = berth[berthId].y;
-            int dist = minlen[i][x * 200 + y];
-            if (dist == INF)
-                nearRobot[i][j] = -1;
-            else
-                nearRobot[i][j] = c;
+            nearRobot[i][j] = c;
             c++;
         }     
     }
@@ -697,15 +691,21 @@ int main() {
                     // 1. 循环判断距离他最近且可达的港口序列，如果该港口的货物数量大于10，就让他去帮忙
                     int j = 1;
                     int n = 6;
-                    int nearId = nearRobot[i][j];
+                    int nearId = -1;
                     
-                    while(j < n && robot[nearId].myGoods.size() <= 10){
+                    int dist = INF;
+                    do{
                         nearId = nearRobot[i][j];
-                        fout << "robot " << nearId << "myGoods.size(): "<< robot[nearId].myGoods.size() << endl;
+                        int nearBerthId = choice[nearId];
+                        int berthId = choice[i];
+                        int x = berth[nearBerthId].x, y = berth[nearBerthId].y;
+                        
+                        int dist = minlen[berthId][x * 200 + y];
+                        fout << "robot " << nearId << " myGoods.size(): "<< robot[nearId].myGoods.size() << endl;
                         j++;
-                    }
+                    }while(dist != INF && j < n && robot[nearId].myGoods.size() <= 10);
                     //j >= BSIZE说明距离最近的前n个港口都没有数量大于10，这种时候就应该什么也不做
-                    if (j < n){
+                    if (dist != INF && j < n){
                         // 2. 从该港口对应的robot的队列里找货物
                         Goods tmp = robot[nearId].myGoods.top();
                         robot[nearId].myGoods.pop();
