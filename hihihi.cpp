@@ -604,7 +604,7 @@ void changeDirection_turnAround(int rid, int frame) {
 
 int main() {
     Init();
-    // srand((unsigned)time(NULL));
+    srand((unsigned)time(NULL));
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
         //第一帧以及每500帧操作一下船
