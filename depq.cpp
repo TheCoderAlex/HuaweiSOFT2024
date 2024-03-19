@@ -20,11 +20,8 @@ public:
         data.insert(item);
     }
 
-    std::optional<T> getMin() const {
-        if (!data.empty()) {
-            return *data.begin();
-        }
-        return {};
+    T getMin() const {
+        return *data.begin();
     }
 
     void removeMin() {
@@ -33,11 +30,8 @@ public:
         }
     }
 
-    std::optional<T> getMax() const {
-        if (!data.empty()) {
-            return *data.rbegin();
-        }
-        return {};
+    T getMax() const {
+        return *data.rbegin();
     }
 
     void removeMax() {
