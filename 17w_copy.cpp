@@ -16,6 +16,7 @@ using namespace std;
 const int M_SIZE = 200;
 const int B_SIZE = 10;
 const int BOAT_SIZE = 5;
+const int DI_BAO_SIZE = 15;
 
 
 char mp[M_SIZE][M_SIZE];
@@ -194,9 +195,6 @@ struct Robot
     vector<string> directions;
     DequePriorityQueue<Goods> myGoods;
 }robot[10];
-
-priority_queue<Boat> boat_queue;    //船的优先级队列
-priority_queue<Berth> berth_queue;  //泊位的优先级队列
 /*
  * 优先队列用法
     while (!pq.empty()) {
@@ -285,7 +283,7 @@ void chooseRobot(Goods goods){
         fout << "!!!!!!!something wrong with your chooseRobot() !!!\n goods information: ( " 
         << goods.x << " , " << goods.y << " )\n";
     // 如果robot的货物队列中的货物太多了，这里是多于10，那么判断当前的货物价值是不是大于这个队列中的最小值，大于才入队，小于就不入        
-    if (robot[maxRoboId].myGoods.size() >= 10) {
+    if (robot[maxRoboId].myGoods.size() >= DI_BAO_SIZE) {
         if (maxR > robot[maxRoboId].myGoods.getMin().ratio) {
             temp_this_frame_goods.insert(robot[maxRoboId].myGoods.getMin());
             fout << "2@@@@@@@@ " << temp_this_frame_goods.size() << endl;
@@ -323,11 +321,6 @@ int Input()
     }
     for(int i = 0; i < 5; i ++) {
         scanf("%d%d\n", &boat[i].status, &boat[i].id);
-        boat[i].shipId = i;         //统计船的id
-        boat_queue.push(boat[i]);   //船按优先级入队
-    }
-    for (int i = 0; i < B_SIZE; i++) {
-        berth_queue.push(berth[i]);
     }
     char okk[100];
     scanf("%s", okk);
@@ -375,83 +368,91 @@ bool isBoatFull (int boatID) {
     return boat[boatID].num == boat_capacity;
 }
 
-void boatAction_2 (int frameID) {
-    /* boat.status:
-        0 : moving
-        1 : finishing shipping OR waiting for loading
-        2 : waiting for berth
-
-        boat.id: id is the berth id; -1 means virtual point.
-    */
-    while (!boat_queue.empty()) {
-        Boat &boat_ = boat[boat_queue.top().shipId];
-        Berth berth_ = berth_queue.top();
-        boat_queue.pop();
-        if (isBoatFull(boat_.shipId)) {
-            boat_.go(boat_.shipId);
-            boat_.num = 0;
-            berth_queue.push(berth[boat_.id]);
-            fout << "------Boat " << boat_.shipId << " is full, carring " << boat_.num << " goods" << endl;
-            continue;
-        }
-        // 判断是不是最后一次送货机会
-        if (boatLastChance(frameID, boat_.shipId)) { //可能会导致时间上的开销增加
-            boat_.go(boat_.shipId);
-            berth_queue.push(berth[boat_.id]);
-            //取出港口中的货物
-            fout << "!!!!!!!!!!!!Boat " << boat_.shipId << " now is the last chance : Berth time is " 
-            << berth[boat_.id].time << " Status is " << boat_.status 
-            << " Now the frame is " << frameID << "I have " << boat_.num << "Goods\n";
-            continue;
-        }
-        if (boat_.id == -1 && boat_.status != 0) {
-            fout << " Boat " << boat_.shipId << " is going to " << berth_.berthId << endl;
-            boat_.ship(boat_.shipId, berth_.berthId);
-            berth_queue.pop();
-            boat_.shipedFrame = frameID + berth_.time;
-        } else if (boat_.id != -1 && boat_.status == 1) {
-            Berth &b = berth[boat_.id];
-            if (b.num < b.velocity) {
-                boat_.num += b.num;
-                b.num = 0;
-                b.value = 0;
-                while (!b.goodsList.empty()) {
-                    b.goodsList.pop();
-                }
-            } else if (boat_capacity - boat_.num < berth[boat_.id].velocity) {
-                int load_num = boat_capacity - boat_.num;
-                boat_.num = boat_capacity;
-                b.num -= load_num;
-                while (load_num > 0) {
-                    load_num--;
-                    b.value -= b.goodsList.front();
-                    b.goodsList.pop();
-                }
-            } else {
-                Berth &b = berth[boat_.id];
-                boat_.num += b.velocity;
-                b.num -= b.velocity;
-                int load_num = b.velocity;
-                while (load_num > 0) {
-                    load_num--;
-                    b.value -= b.goodsList.front();
-                    b.goodsList.pop();
-                }
-            } 
-            if (boat_.id != -1 && !isBoatFull(boat_.shipId) && berth[boat_.id].num == 0) {
-                Berth &b = berth[boat_.id];
-                Berth berth_ = berth_queue.top();
-                berth_queue.pop();
-                boat_.ship(boat_.shipId,berth_.berthId);
-                boat_.shipedFrame = frameID + 500;
-                berth_queue.push(b);
-            }
-        }
-        fout << "+++++Boat: " << boat_.shipId << " Status is " << boat_.status << " Now is at " << boat_.id <<"\n";
-    }
-    while (!berth_queue.empty()) 
-        berth_queue.pop();
-}
+// void boatAction_2 (int frameID) { // 废弃
+//     /* boat.status:
+//         0 : moving
+//         1 : finishing shipping OR waiting for loading
+//         2 : waiting for berth
+//         boat.id: id is the berth id; -1 means virtual point.
+//     */
+//     while (!boat_queue.empty()) {
+//         Boat &boat_ = boat[boat_queue.top().shipId];
+//         Berth &berth_ = berth[berth_queue.top().berthId];
+//         boat_queue.pop();
+//         while (berth_.flag && !berth_queue.empty())
+//             berth_queue.pop();
+//         berth_ = berth[berth_queue.top().berthId];
+//         if (isBoatFull(boat_.shipId)) {
+//             boat_.go(boat_.shipId);
+//             boat_.num = 0;
+//             berth_queue.push(berth[boat_.id]);
+//             berth[boat_.id].flag = false;
+//             fout << "------Boat " << boat_.shipId << " is full, carring " << boat_.num << " goods" << endl;
+//             continue;
+//         }
+//         // 判断是不是最后一次送货机会
+//         if (boatLastChance(frameID, boat_.shipId)) { //可能会导致时间上的开销增加
+//             boat_.go(boat_.shipId);
+//             berth_queue.push(berth[boat_.id]);
+//             berth[boat_.id].flag = false;
+//             //取出港口中的货物
+//             fout << "!!!!!!!!!!!!Boat " << boat_.shipId << " now is the last chance : Berth time is " 
+//             << berth[boat_.id].time << " Status is " << boat_.status 
+//             << " Now the frame is " << frameID << "I have " << boat_.num << "Goods\n";
+//             continue;
+//         }
+//         if (boat_.id == -1 && boat_.status != 0) {
+//             fout << " Boat " << boat_.shipId << " is going to " << berth_.berthId << endl;
+//             boat_.ship(boat_.shipId, berth_.berthId);
+//             berth_queue.pop();
+//             berth_.flag = true;
+//             fout << " Berth " << berth_.berthId << " is been selected!!" << endl;
+//             boat_.shipedFrame = frameID + berth_.time;
+//         } else if (boat_.id != -1 && boat_.status == 1) {
+//             Berth &b = berth[boat_.id];
+//             if (b.num < b.velocity) {
+//                 boat_.num += b.num;
+//                 b.num = 0;
+//                 b.value = 0;
+//                 while (!b.goodsList.empty()) {
+//                     b.goodsList.pop();
+//                 }
+//             } else if (boat_capacity - boat_.num < berth[boat_.id].velocity) {
+//                 int load_num = boat_capacity - boat_.num;
+//                 boat_.num = boat_capacity;
+//                 b.num -= load_num;
+//                 while (load_num > 0) {
+//                     load_num--;
+//                     b.value -= b.goodsList.front();
+//                     b.goodsList.pop();
+//                 }
+//             } else {
+//                 Berth &b = berth[boat_.id];
+//                 boat_.num += b.velocity;
+//                 b.num -= b.velocity;
+//                 int load_num = b.velocity;
+//                 while (load_num > 0) {
+//                     load_num--;
+//                     b.value -= b.goodsList.front();
+//                     b.goodsList.pop();
+//                 }
+//             } 
+//             if (boat_.id != -1 && !isBoatFull(boat_.shipId) && berth[boat_.id].num == 0) {
+//                 Berth &b = berth[boat_.id];
+//                 Berth &berth_ = berth[berth_queue.top().berthId];
+//                 berth_queue.pop();
+//                 berth_.flag = true;
+//                 boat_.ship(boat_.shipId,berth_.berthId);
+//                 boat_.shipedFrame = frameID + 500;
+//                 berth_queue.push(b);
+//                 b.flag = false;
+//             }
+//         }
+//         fout << "+++++Boat: " << boat_.shipId << " Status is " << boat_.status << " Now is at/going " << boat_.id <<"\n";
+//     }
+//     while (!berth_queue.empty())
+//         berth_queue.pop();
+// }
 
 void boatAction (int frameID) {
     /* boat.status:
@@ -677,7 +678,7 @@ int main() {
         fout << "----------" << endl;
 
         if (frame > 7000)
-            boatAction_2(frame_id);
+            boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
         
@@ -690,7 +691,7 @@ int main() {
                 int maxId = -1;
                 Goods t;
                 for (int j = 0; j < B_SIZE; j++) {
-                    if (robot[j].myGoods.size() < 10 && robot[j].waiting_frame > 0) {
+                    if (robot[j].myGoods.size() < DI_BAO_SIZE && robot[j].waiting_frame > 0) {
                         t = temp_this_frame_goods.getMax();
                         int dist = minlen[choice[j]][t.x * 200 + t.y];
                         double ratio = goodsRatio(t.value, dist, j);
@@ -833,7 +834,7 @@ int main() {
                 }
             }
         }
-        while (!goods_queue.isEmpty()) {
+        while (goods_queue.size() >= 10 && !goods_queue.isEmpty()) {
             goods_queue.removeMax();
         }
         puts("OK");
