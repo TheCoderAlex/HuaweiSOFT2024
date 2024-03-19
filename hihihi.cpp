@@ -604,7 +604,7 @@ void changeDirection_turnAround(int rid, int frame) {
 
 int main() {
     Init();
-    srand((unsigned)time(NULL));
+    // srand((unsigned)time(NULL));
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
         //第一帧以及每500帧操作一下船
@@ -617,7 +617,7 @@ int main() {
         }
         fout << "----------" << endl;
 
-        if (frame > 6000)
+        if (frame > 5000)
             boatAction(frame_id);
 
         //新增的货物入队 集合到 Input 函数中了
