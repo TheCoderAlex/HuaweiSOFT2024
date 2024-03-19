@@ -224,7 +224,13 @@ void Init()
     for (int i = 0; i < B_SIZE; i ++){
         int c = 0;
         for (int j = 0; j < B_SIZE; j ++){
-            nearRobot[i][j] = c;
+            int berthId = choice[c];
+            int x = berth[berthId].x, y = berth[berthId].y;
+            int dist = minlen[i][x * 200 + y];
+            if (dist == INF)
+                nearRobot[i][j] = -1;
+            else
+                nearRobot[i][j] = c;
             c++;
         }     
     }
@@ -248,7 +254,8 @@ void Init()
         }
     }
 
-    //3. 输出一下
+
+    //4. 输出一下
     fout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
     for (int i = 0; i < B_SIZE; i ++){
         fout << i << " : ";
@@ -330,6 +337,12 @@ int Input()
     scanf("%d%d", &frame_id, &money);
     scanf("%d", &k);
     goods_sum += k;
+
+    //初始化help_robot
+    for (int i = 0; i < B_SIZE && frame_id == 1; i ++){
+        robot[i].help_robot = i;
+    }
+
     for(int i = 0; i < k; i ++)
     {
         int x, y, val;
@@ -681,7 +694,7 @@ int main() {
                     robot[i].help_robot = i;
                 }else{
                     // 如果队列为空，说明该robot对应的港口没有有效货物，则让他去离他最近且有货物的地方帮忙。
-                    // 1. 循环判断距离他最近的港口序列，如果该港口的货物数量大于10，就让他去帮忙
+                    // 1. 循环判断距离他最近且可达的港口序列，如果该港口的货物数量大于10，就让他去帮忙
                     int j = 1;
                     int n = 6;
                     int nearId = nearRobot[i][j];
