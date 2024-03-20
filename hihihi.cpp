@@ -17,7 +17,7 @@ const int B_SIZE = 10;
 const int BOAT_SIZE = 5;
 
 
-char mp[M_SIZE][M_SIZE];
+char mp[210][210];
 int boat_capacity;
 int money,frame_id;
 int k;
@@ -27,9 +27,7 @@ int total_berth_value = 0;
 int total_berth_num = 0;
 int goods_sum = 0;
 int goods_ignore = 0;
-
-
-// queue<pair<int, int>> goods_queue;
+bool start_flag = 0;
 
 int dx[4] = {0, 1, -1, 0};
 int dy[4] = {-1, 0, 0, 1};
@@ -172,7 +170,6 @@ struct Goods
         this->value = val;
     }
 };
-priority_queue<Goods> goods_queue;
 
 struct Robot
 {
@@ -313,7 +310,7 @@ double goodsRatio(int value, int distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0.5;
+    double threshold = 0.1;
     // 遍历机器人
     fout << "[^]goods_sum = " << goods_sum << " \n";
     fout << "[^]goods_ignore = " << goods_ignore << " \n";
@@ -362,7 +359,6 @@ int Input()
         scanf("%d%d%d", &x, &y, &val);
         Goods goods = {frame_id, x, y, val};
         total_val += val;
-        // goods_queue.push(goods);
         // 选择一个性价比最高的机器人，然后进入它的货物队列
         chooseRobot(goods);
     }
@@ -643,44 +639,23 @@ int main() {
         }
         fout << "----------" << endl;
 
-        if (frame > 5000)
+        if (start_flag)
             boatAction(frame_id);
+        else {
+            for (int i = 0; i < B_SIZE; ++i) {
+                if (berth[i].num >= boat_capacity * 0.85) {
+                    start_flag = true;
+                    break;
+                }
+            }
+        }
 
         //新增的货物入队 集合到 Input 函数中了
-        
         for (int i = 0; i < 10; ++i) {    
             // if (i == 3) continue;   
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   
-            // priority_queue<Goods> temp;
-            // //找到空闲的机器人就去分配货物
-            // while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
-            //     Goods tmp = goods_queue.top();
-            //     if (-60 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 60 && -60 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=60) {
-            //         robot[i].myGoods.push(tmp);
-            //         goods_queue.pop();
-            //     } else {
-            //         temp.push(goods_queue.top());
-            //         goods_queue.pop();
-            //     }
-            // }
-            // while (!temp.empty()) {
-            //     goods_queue.push(temp.top());
-            //     temp.pop();
-            // }
-            // if (!robot[i].myGoods.empty()) {
-            //     while (frame_id - robot[i].myGoods.top().frame >= 1000) {
-            //         robot[i].myGoods.pop();
-            //     }
-            //     Goods tmp = robot[i].myGoods.top();
-            //     robot[i].myGoods.pop();
-            //     robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-            //     robot[i].mbx = tmp.x;
-            //     robot[i].mby = tmp.y;
-            //     robot[i].goods_value = tmp.value;
-            //     robot[i].status = 1;
-            // }
             //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods){
                 // 把前 1 个超时的货物 丢弃掉
@@ -740,7 +715,6 @@ int main() {
                 }
             }
             
-
             //如果没带货物碰撞
             if (robot[i].st == 0 && !robot[i].has_goods) {
                 robot[i].status = 0;
@@ -811,9 +785,6 @@ int main() {
                     pullGoods(i);
                 }
             }
-        }
-        while (!goods_queue.empty()) {
-            goods_queue.pop();
         }
         puts("OK");
         //输出每一帧的泊位剩余货物大小

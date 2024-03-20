@@ -6,6 +6,6 @@ set /a seed=!randHigh!+!randLow!
 echo Generated seed: !seed!
 pause
 
-.\PreliminaryJudge.exe -l ERR -d log.txt -s !seed! -m maps\map6.txt .\Demo\hihihi.exe
+.\PreliminaryJudge.exe -l ERR -d log.txt -s !seed! -m maps\map6.txt .\Demo\main.exe
 
 endlocal
