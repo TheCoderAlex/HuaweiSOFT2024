@@ -499,7 +499,7 @@ void boatAction (int frameID) {
             }
             
             // 如果我把这个港口装空了 我就找下一个
-            if (!isBoatFull(i) && berth[boat[i].id].num == 0) {
+            if (boat[i].id != -1 && !isBoatFull(i) && berth[boat[i].id].num == 0) {
                 berth[boat[i].myLastBerth].flag = false;
                 int berthID = getMaxValueBerthID();
                 fout << "$$$$$$$$$ Boat " << i << " chooses the " << berthID << endl;

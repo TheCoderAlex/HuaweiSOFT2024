@@ -380,7 +380,7 @@ void boatAction (int frameID) {
         if (boat[i].status == 0)
             continue;
         if (boat[i].status == 2) {
-            int berthID = getMaxRatioBerthID();
+            int berthID = getMaxValueBerthID();
             if (berthID == boat[i].id)
                 boat[i].shipedFrame += 1;
             else {
@@ -389,7 +389,7 @@ void boatAction (int frameID) {
             }
         }
         if (boat[i].id == -1 && boat[i].status != 0) {
-            int berthID = getMaxRatioBerthID();
+            int berthID = getMaxValueBerthID();
             boat[i].myLastBerth = berthID;
             boat[i].ship(i, berthID);
             berth[berthID].flag = true;
@@ -428,7 +428,7 @@ void boatAction (int frameID) {
             // 如果我把这个港口装空了 我就找下一个
             if (boat[i].id != -1 && !isBoatFull(i) && berth[boat[i].id].num == 0) {
                 berth[boat[i].myLastBerth].flag = false;
-                int berthID = getMaxRatioBerthID();
+                int berthID = getMaxValueBerthID();
                 boat[i].ship(i, berthID);
                 berth[berthID].flag = true;
                 boat[i].shipedFrame = frameID + 500;
