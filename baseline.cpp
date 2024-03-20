@@ -15,7 +15,6 @@ using namespace std;
 const int M_SIZE = 200;
 const int B_SIZE = 10;
 const int BOAT_SIZE = 5;
-ofstream fout("out.txt");
 
 char mp[210][210];
 int boat_capacity;
@@ -570,7 +569,7 @@ int main() {
             boatAction(frame_id);
         else {
             for (int i = 0; i < B_SIZE; i++){
-                if (berth[i].num >= boat_capacity * 0.50) {
+                if (berth[i].num >= boat_capacity * 0.85) {
                     fout << "============= start boat!!!! frame: " << frame_id << endl;
                     start_flag = true;
                     break;
