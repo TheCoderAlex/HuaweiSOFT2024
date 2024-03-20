@@ -1,1 +1,1 @@
-./PreliminaryJudge ./Demo/main -m ./maps/map6.txt -d log.txt
+./PreliminaryJudge ./Demo/main -s 333213 -m ./maps/map6.txt -d log.txt
