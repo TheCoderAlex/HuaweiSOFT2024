@@ -267,7 +267,29 @@ void Init()
 }
 
 //计算货物的性价比
-double goodsRatio(int value, int distance,int robot_id){
+// double goodsRatio(int value, int distance,int robot_id){
+//     //添加机器人的负载
+//     double load_coefficient = 0.6;
+//     double value_coefficient = 0.8;
+//     double distance_coefficient = 1.2;
+
+//     int load = robot[robot_id].myGoods.size() + 1;
+//     if (distance <= 0) return value * 1.0;
+    
+
+//     //以距离为60为界限
+//     int p = 60;
+//     if(distance <= p){
+//         // 时间价值系数计算
+//         value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1-pow(1- (double) distance / p, 2)));
+//         distance_coefficient = 1;
+//     } else {
+//          distance_coefficient = 1 + (distance - p) / 10.0;
+//     }
+//     return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load) + 0.1 * (robot[robot_id].waiting_frame + 1);
+// }
+
+double goodsRatio(int value, double distance,int robot_id){
     //添加机器人的负载
     double load_coefficient = 0.6;
     double value_coefficient = 0.8;
@@ -276,17 +298,14 @@ double goodsRatio(int value, int distance,int robot_id){
     int load = robot[robot_id].myGoods.size() + 1;
     if (distance <= 0) return value * 1.0;
     
-
-    //以距离为60为界限
+    //以曼哈顿距离为60为界限
     int p = 60;
     if(distance <= p){
         // 时间价值系数计算
-        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1-pow(1- (double) distance / p, 2)));
-        distance_coefficient = 1;
-    } else {
-         distance_coefficient = 1 + (distance - p) / 10.0;
+        value_coefficient = 0.8 + (1 - 0.8) * (1 - sqrt(1-pow(1-distance / p, 2)));
+        distance_coefficient = 0.8;
     }
-    return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load) + 0.1 * (robot[robot_id].waiting_frame + 1);
+    return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
 }
 
 
@@ -294,7 +313,7 @@ double goodsRatio(int value, int distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0.1;
+    double threshold = 0;
     // 遍历机器人
     fout << "[^]goods_sum = " << goods_sum << " \n";
     fout << "[^]goods_ignore = " << goods_ignore << " \n";
