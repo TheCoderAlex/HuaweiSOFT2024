@@ -644,6 +644,7 @@ int main() {
         else {
             for (int i = 0; i < B_SIZE; ++i) {
                 if (berth[i].num >= boat_capacity * 0.85) {
+                    fout << "============= start boat!!!! frame: " << frame_id << endl;
                     start_flag = true;
                     break;
                 }
