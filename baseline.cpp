@@ -203,9 +203,10 @@ void Init()
         scanf("%d", &id);
         scanf("%d%d%d%d", &berth[id].x, &berth[id].y, &berth[id].time, &berth[id].velocity);
         berthid[{berth[id].x,berth[id].y}] = id;    //berth坐标到id的映射
-        fout << "Berth :" << id << " TIME is " << berth[id].time << endl;
+        fout << "Berth :" << id << " TIME is " << berth[id].time << "装卸速度: " << berth[id].velocity << endl;
     }
     scanf("%d", &boat_capacity);
+    fout << "-----------Boat_Capacity is" << boat_capacity << endl;
     
     for (int i = 0; i < 10; ++i) {
         dijkstra(berth[i].x * 200 + berth[i].y);
@@ -310,17 +311,18 @@ bool boatLastChance (int frameID, int boatID) {
 }
 
 // 找到拥有货物数量最多的泊位
+//改一
 int getMaxGoodsBerthID () {
-    int maxGoods = 0;
+    int maxGoodsRate = -1;
     int BerthID = -1;
     for (int i = 0; i < 10; i++) {
         if (!berth[i].flag)
-            if (berth[i].num >= maxGoods) {
-                maxGoods = berth[i].num;
+            if (berth[i].num >= maxGoodsRate) {
+                maxGoodsRate = berth[i].num;
                 BerthID = i;
             }
-    }
-    return BerthID;
+        }   
+    return BerthID == -1 ? rand() % 10 : BerthID;
 }
 
 // 找到拥有最高价值的泊位
@@ -365,6 +367,7 @@ void boatAction (int frameID) {
     for (int i = 0; i < BOAT_SIZE; i ++) {
         if (isBoatFull(i)) {
             boat[i].go(i);
+            fout << "Boat: " << i << " is full" << endl;
             berth[boat[i].myLastBerth].flag = false;
             boat[i].num = 0;
             continue;
@@ -375,13 +378,16 @@ void boatAction (int frameID) {
             boat[i].go(i);
             berth[boat[i].myLastBerth].flag = false;
             //取出港口中的货物
+            fout << "!!!!!!!!!!!!Boat " << i << " now is the last chance : Berth time is " 
+            << berth[boat[i].id].time << " Status is " << boat[i].status << "I am now at " << boat[i].myLastBerth 
+            << " Now the frame is " << frameID << "I have " << boat[i].num << "Goods\n";
             continue;
         }
 
         if (boat[i].status == 0)
             continue;
         if (boat[i].status == 2) {
-            int berthID = getMaxValueBerthID();
+            int berthID = getMaxGoodsBerthID();
             if (berthID == boat[i].id)
                 boat[i].shipedFrame += 1;
             else {
@@ -390,9 +396,10 @@ void boatAction (int frameID) {
             }
         }
         if (boat[i].id == -1 && boat[i].status != 0) {
-            int berthID = getMaxValueBerthID();
+            int berthID = getMaxGoodsBerthID();
             boat[i].myLastBerth = berthID;
             boat[i].ship(i, berthID);
+            fout << "Boat " << i << " Now is going to " << berthID << " have" << boat[i].num << "Goods" << endl;
             berth[berthID].flag = true;
             boat[i].shipedFrame = frameID + berth[berthID].time;
         } else if (boat[i].id != -1 && boat[i].status == 1) {
@@ -428,11 +435,14 @@ void boatAction (int frameID) {
             
             // 如果我把这个港口装空了 我就找下一个
             if (boat[i].id != -1 && !isBoatFull(i) && berth[boat[i].id].num == 0) {
-                berth[boat[i].myLastBerth].flag = false;
-                int berthID = getMaxValueBerthID();
-                boat[i].ship(i, berthID);
-                berth[berthID].flag = true;
-                boat[i].shipedFrame = frameID + 500;
+                if (boat_capacity - boat[i].num >= 7) {
+                    berth[boat[i].myLastBerth].flag = false;
+                    int berthID = getMaxGoodsBerthID();
+                    boat[i].ship(i, berthID);
+                    berth[berthID].flag = true;
+                    boat[i].shipedFrame = frameID + 500;
+                    fout << "Boat : " << i << "我装的还不够，去下一个: " << berthID << endl;
+                }
             }
         }
     }
@@ -565,11 +575,12 @@ int main() {
         // 什么时候开始出发?
         // if (frame_id > 7000)
         //     boatAction(frame_id);
-        if (start_flag)
+
+        if (start_flag) 
             boatAction(frame_id);
         else {
             for (int i = 0; i < B_SIZE; i++){
-                if (berth[i].num >= boat_capacity * 0.75) {
+                if (berth[i].num >= boat_capacity * 0.5) {
                     start_flag = true;
                     break;
                 }
@@ -703,6 +714,15 @@ int main() {
                 }
             }
         }
+        fout << "########frame_id: " << frame_id << endl;
+        fout << "----------" << endl;
+        for (int i = 0;i < 10; i++) {
+            fout << "Berth " << i << ": " << berth[i].num << " 累计 Value is" << berth[i].value<< endl;
+        }
+        fout << "----------" << endl;
+        fout << "?????total K is: " << total_k << "total value: " << total_val << endl;
+        fout << "?????We get total K is: " << total_berth_num << "total value: " << total_berth_value << endl;
+        fout << "----------" << endl;
         puts("OK");
         fflush(stdout);
     }
