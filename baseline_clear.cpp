@@ -17,7 +17,7 @@ const int B_SIZE = 10;
 const int BOAT_SIZE = 5;
 
 
-char mp[M_SIZE][M_SIZE];
+char mp[210][210];
 int boat_capacity;
 int money,frame_id;
 int k;
@@ -45,7 +45,7 @@ bool isValid(int x, int y) {
 vector<string> BFS(int startX, int startY, int endX, int endY) {
     queue<pair<int, int> > q;
     vector<vector<bool> > visited(M_SIZE, vector<bool>(M_SIZE, false));
-    map<pair<int, int>, pair<int, int> > parent;
+    map<pair<int, int>, pair<int, int>> parent;
     map<pair<int, int>, string> move;
 
     q.push({startX, startY});

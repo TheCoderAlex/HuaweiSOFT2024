@@ -352,7 +352,7 @@ int Input()
     goods_sum += k;
 
     //初始化help_robot
-    for (int i = 0; i < B_SIZE && frame_id == 1; i ++){
+    for (int i = 0; i < B_SIZE && frame_id == 1; i ++) {
         robot[i].help_robot = i;
     }
 
