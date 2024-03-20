@@ -245,18 +245,6 @@ void Init()
         }
     }
 
-
-    //4. 输出一下
-    fout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-    for (int i = 0; i < B_SIZE; i ++){
-        fout << i << " : ";
-        for (int j = 0; j < B_SIZE; j ++){
-            fout << choice[nearRobot[i][j]] << ", " ;
-        }
-        fout << endl;   
-    }
-    fout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << endl;
-
     char okk[100];
     scanf("%s", okk);
     printf("OK\n");
@@ -285,25 +273,6 @@ double goodsRatio(int value, int distance,int robot_id){
     }
     return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load) + 0.1 * (robot[robot_id].waiting_frame + 1);
 }
-
-// double goodsRatio(int value, double distance,int robot_id){
-//     //添加机器人的负载
-//     double load_coefficient = 0.6;
-//     double value_coefficient = 0.8;
-//     double distance_coefficient = 1.2;
-
-//     int load = robot[robot_id].myGoods.size() + 1;
-//     if (distance <= 0) return value * 1.0;
-    
-//     //以曼哈顿距离为60为界限
-//     int p = 60;
-//     if(distance <= p){
-//         // 时间价值系数计算
-//         value_coefficient = 0.8 + (1 - 0.8) * (1 - sqrt(1-pow(1-distance / p, 2)));
-//         distance_coefficient = 0.8;
-//     }
-//     return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
-// }
 
 
 // 为当前生成的货物寻找一个机器人
@@ -415,6 +384,48 @@ bool isBoatFull (int boatID) {
     return boat[boatID].num == boat_capacity;
 }
 
+//计算港口的性价比
+double berthRatio(int berthId){
+
+    double value_coefficient = 0.8;
+    double distance_coefficient = 1.2;
+
+    int distance = berth[berthId].time;
+    int value = berth[berthId].value;
+
+
+    //以距离为1000为界限
+    int p = 1000;
+    if(distance <= p){
+        // 时间价值系数计算
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1-pow(1- (double) distance / p, 2)));
+        distance_coefficient = 1;
+    } else {
+         distance_coefficient = 1 + (distance - p) / 10.0;
+    }
+    return value *  value_coefficient / (distance_coefficient * distance );
+
+}
+
+int chooseBerth(){
+    int maxR = 0;
+    int maxBerthId = -1;
+    for (int i = 0; i < B_SIZE; ++i){
+        double ratio = berthRatio(i);
+        if (ratio > maxR){
+            maxR = ratio;
+            maxBerthId = i;
+        }
+    }
+    if (maxBerthId < 0){
+        fout << "!!!!!!!something wrong with your chooseBerth() !!!\n";
+        return -1;
+    }else
+        return maxBerthId;
+        
+
+}
+
 void boatAction (int frameID) {
     /* boat.status:
         0 : moving
@@ -458,6 +469,7 @@ void boatAction (int frameID) {
         }
         if (boat[i].id == -1 && boat[i].status != 0) {
             int berthID = getMaxValueBerthID();
+            // int berthID = chooseBerth();
             fout << "$$$$$$$$$ Boat " << i << " chooses the " << berthID << endl;
             boat[i].myLastBerth = berthID;
             boat[i].ship(i, berthID);
@@ -498,6 +510,7 @@ void boatAction (int frameID) {
             if (boat[i].id != -1 && !isBoatFull(i) && berth[boat[i].id].num == 0) {
                 berth[boat[i].myLastBerth].flag = false;
                 int berthID = getMaxValueBerthID();
+                // int berthID = chooseBerth();
                 fout << "$$$$$$$$$ Boat " << i << " chooses the " << berthID << endl;
                 boat[i].ship(i, berthID);
                 berth[berthID].flag = true;
@@ -751,18 +764,7 @@ int main() {
                     getGoods(i);
                 } 
             } else if (robot[i].status == 1 && robot[i].has_goods) {
-                //拿到货物去泊位
-                // int minLen = 1000000;
-                // vector<string> tmp;
-                // //泊位选择
-                // for(int j = 0; j < 10; j ++){
-                //     vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
-                //     if(!one.empty() && one.size() < minLen){
-                //         minLen = one.size();
-                        
-                //         tmp = one;
-                //     }
-                // }
+
                 if (has_cracked[i] == 1) {
                     changeDirectionRandom(i, frame_id);
                     // changeDirection_turnAround(i, frame_id);
