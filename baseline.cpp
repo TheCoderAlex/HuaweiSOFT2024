@@ -15,7 +15,7 @@ using namespace std;
 const int M_SIZE = 200;
 const int B_SIZE = 10;
 const int BOAT_SIZE = 5;
-
+ofstream fout("out.txt");
 
 char mp[210][210];
 int boat_capacity;
@@ -203,6 +203,7 @@ void Init()
         scanf("%d", &id);
         scanf("%d%d%d%d", &berth[id].x, &berth[id].y, &berth[id].time, &berth[id].velocity);
         berthid[{berth[id].x,berth[id].y}] = id;    //berth坐标到id的映射
+        fout << "Berth :" << id << " TIME is " << berth[id].time << endl;
     }
     scanf("%d", &boat_capacity);
     

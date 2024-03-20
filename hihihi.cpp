@@ -17,7 +17,7 @@ const int B_SIZE = 10;
 const int BOAT_SIZE = 5;
 
 
-char mp[M_SIZE][M_SIZE];
+char mp[210][210];
 int boat_capacity;
 int money,frame_id;
 int k;
