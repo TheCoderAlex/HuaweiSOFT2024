@@ -15,7 +15,6 @@ using namespace std;
 const int M_SIZE = 200;
 const int B_SIZE = 10;
 const int BOAT_SIZE = 5;
-ofstream fout("out.txt");
 
 char mp[210][210];
 int boat_capacity;
@@ -37,6 +36,7 @@ string dir[4] = {"1", "3", "2", "0"};
 bool has_cracked[10];
 int choice[10] = {0,1,2,3,4,5,6,7,8,9};  //机器人的泊位选择
 map<pair<int,int>,int> berthid;   //泊位坐标到id的映射
+ofstream fout("out.txt");
 
 bool isValid(int x, int y) {
     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
@@ -222,24 +222,23 @@ void Init()
 //计算货物的性价比
 double goodsRatio(int value, int distance,int robot_id){
     //添加机器人的负载
-    double load_coefficient = 0.6;
+    double load_coefficient = 0.9;
     double value_coefficient = 0.8;
     double distance_coefficient = 1.2;
 
     int load = robot[robot_id].myGoods.size() + 1;
-    if (distance <= 0) return value * 1.0;
-    
+    // if (distance <= 0) return value * 1.0;
 
     //以距离为60为界限
     int p = 60;
     if(distance <= p){
         // 时间价值系数计算
-        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1-pow(1- (double) distance / p, 2)));
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
         // distance_coefficient = 1;
-        distance_coefficient = 1.2;
-    } else {
-         distance_coefficient = 1.2 + (distance - p) / 10.0;
+        distance_coefficient = distance_coefficient - (distance_coefficient - 1) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
+
     }
+
     return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
 }
 
@@ -575,12 +574,13 @@ int main() {
         // 什么时候开始出发?
         // if (frame_id > 7000)
         //     boatAction(frame_id);
-
-        if (start_flag) 
+        
+        if (start_flag)
             boatAction(frame_id);
         else {
             for (int i = 0; i < B_SIZE; i++){
                 if (berth[i].num >= boat_capacity * 0.5) {
+                    fout << "============= start boat!!!! frame: " << frame_id << endl;
                     start_flag = true;
                     break;
                 }
@@ -594,34 +594,7 @@ int main() {
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   
-            // priority_queue<Goods> temp;
-            // //找到空闲的机器人就去分配货物
-            // while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
-            //     Goods tmp = goods_queue.top();
-            //     if (-60 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 60 && -60 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=60) {
-            //         robot[i].myGoods.push(tmp);
-            //         goods_queue.pop();
-            //     } else {
-            //         temp.push(goods_queue.top());
-            //         goods_queue.pop();
-            //     }
-            // }
-            // while (!temp.empty()) {
-            //     goods_queue.push(temp.top());
-            //     temp.pop();
-            // }
-            // if (!robot[i].myGoods.empty()) {
-            //     while (frame_id - robot[i].myGoods.top().frame >= 1000) {
-            //         robot[i].myGoods.pop();
-            //     }
-            //     Goods tmp = robot[i].myGoods.top();
-            //     robot[i].myGoods.pop();
-            //     robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-            //     robot[i].mbx = tmp.x;
-            //     robot[i].mby = tmp.y;
-            //     robot[i].goods_value = tmp.value;
-            //     robot[i].status = 1;
-            // }
+            
             //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
                 // 把前 1 个超时的货物 丢弃掉
@@ -724,6 +697,16 @@ int main() {
         fout << "?????We get total K is: " << total_berth_num << "total value: " << total_berth_value << endl;
         fout << "----------" << endl;
         puts("OK");
+         //输出每一帧的泊位剩余货物大小
+        fout << "frame_id: " << frame_id << endl;
+        fout << "----------" << endl;
+        for (int i = 0;i < 10; i++) {
+            fout << "Berth " << i << ": " << berth[i].num << " 累计 Value is" << berth[i].value<< endl;
+        }
+        fout << "----------" << endl;
+        fout << "?????total K is: " << total_k << "total value: " << total_val << endl;
+        fout << "?????We get total K is: " << total_berth_num << "total value: " << total_berth_value << endl;
+        fout << "----------" << endl;
         fflush(stdout);
     }
     return 0;
