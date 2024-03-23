@@ -284,17 +284,17 @@ void Init()
 double goodsRatio(int value, int distance,int robot_id){
     //添加机器人的负载
     double load_coefficient = 0.5;
-    double value_coefficient = 0.8;
+    double value_coefficient = 0.6;
     //double distance_coefficient = 1.2;
 
     int load = robot[robot_id].myGoods.size() + 1;
     // if (distance <= 0) return value * 1.0;
 
     //以距离为60为界限
-    int p = 60;
+    int p = 30;
     if(distance <= p){
         // 时间价值系数计算
-        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))) + robot[robot_id].waiting_frame;
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
         // value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2))) + robot[robot_id].waiting_frame / 3;
         // distance_coefficient = 1;
         //distance_coefficient = distance_coefficient - (distance_coefficient - 1) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
@@ -678,14 +678,13 @@ int main() {
         //新增的货物入队 集合到 Input 函数中了
         
         for (int i = 0; i < 10; ++i) {
-            if (i == 3) continue;
             // 解决 谦让 问题
             if (frame_id == 1) {
                 robot[i].lastx = robot[i].x;
                 robot[i].lasty = robot[i].y;
-            } else if (frame_id % 20 == 0) { //
-                if (((robot[i].x - robot[i].lastx == 0 && (robot[i].y - robot[i].lasty == 0 || robot[i].y - robot[i].lasty == 1 || robot[i].y - robot[i].lasty == -1))
-                || (robot[i].y - robot[i].lasty == 0 && (robot[i].x - robot[i].lastx == 0 || robot[i].x - robot[i].lastx == 1 || robot[i].x - robot[i].lastx == -1)))) {
+            } else if (frame_id % 15 == 0) { //
+                if (((robot[i].x - robot[i].lastx == 0 && (robot[i].y - robot[i].lasty == 1 || robot[i].y - robot[i].lasty == -1))
+                || (robot[i].y - robot[i].lasty == 0 && (robot[i].x - robot[i].lastx == 1 || robot[i].x - robot[i].lastx == -1)))) {
                     robot[i].wait++;
                     fout << "Robot: " << i << " wait is " << robot[i].wait << endl;
                 }
