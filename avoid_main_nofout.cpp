@@ -307,10 +307,11 @@ void Init()
             bmap[xy2pos({i,j})] = (mp[i][j] == '#' || mp[i][j] == '*');
         }
     }
-    if (mp[0][0] == '*')
+    if (mp[14][43] == 'A')
         mmmap = 1;
-    else
+    else if (mp[49][40] == 'A')
         mmmap = 2;
+    else mmmap = 3;
 
     for(int i = 0; i < B_SIZE; i ++)
     {
@@ -325,7 +326,8 @@ void Init()
         dijkstra(berth[i].x * 200 + berth[i].y);
         minlen[i] = dist;
     }
-    robotBerthChoose();
+    if (mmmap == 3)
+        robotBerthChoose();
     // for (int i = 0; i < 10; ++i) {
     //     cerr << choice[i] << ' ';
     // }
@@ -341,13 +343,18 @@ double goodsRatio(int value, int distance,int robot_id){
     //添加机器人的负载
     double load_coefficient = 0.5;
     double value_coefficient = 0.6;
+    if (mmmap == 1)
+        value_coefficient = 0.8;
     //double distance_coefficient = 1.2;
 
     int load = robot[robot_id].myGoods.size() + 1;
     // if (distance <= 0) return value * 1.0;
 
     //以距离为60为界限
-    int p = 70;
+    int p = 30;
+    if (mmmap == 3) {
+        p = 70;
+    }
     if(distance <= p){
         // 时间价值系数计算
         value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
@@ -482,6 +489,92 @@ bool isBoatFull (int boatID) {
 }
 
 void boatAction (int frameID) {
+    /* boat.status:
+        0 : moving
+        1 : finishing shipping OR waiting for loading
+        2 : waiting for berth
+
+        boat.id: id is the berth id; -1 means virtual point.
+    */
+    for (int i = 0; i < BOAT_SIZE; i ++) {
+        if (isBoatFull(i)) {
+            boat[i].go(i);
+            berth[boat[i].myLastBerth].flag = false;
+            boat[i].num = 0;
+            continue;
+        }
+        
+        // 判断是不是最后一次送货机会
+        if (boatLastChance(frameID, i)) { //可能会导致时间上的开销增加
+            boat[i].go(i);
+            berth[boat[i].myLastBerth].flag = false;
+            //取出港口中的货物
+            continue;
+        }
+
+        if (boat[i].status == 0)
+            continue;
+        if (boat[i].status == 2) {
+            int berthID = getMaxValueBerthID();
+            if (berthID == boat[i].id)
+                boat[i].shipedFrame += 1;
+            else {
+                boat[i].ship(i, berthID);
+                boat[i].shipedFrame = frameID + berth[berthID].time;
+            }
+        }
+        if (boat[i].id == -1 && boat[i].status != 0) {
+            int berthID = getMaxValueBerthID();
+            boat[i].myLastBerth = berthID;
+            boat[i].ship(i, berthID);
+            berth[berthID].flag = true;
+            boat[i].shipedFrame = frameID + berth[berthID].time;
+        } else if (boat[i].id != -1 && boat[i].status == 1) {
+            boat[i].myLastBerth = boat[i].id;
+            // 如果 此时泊位的货物数量小于泊位每帧装卸速度，那就直接将 泊位num 赋值为0,否则就让让 nun - 装卸速度 velocity
+            // 如果 船当前剩余容量小于泊位装卸速度 那么这一帧 最多装我还差的量
+            // load_num 为装货数量
+            if (berth[boat[i].id].num < berth[boat[i].id].velocity) {
+                boat[i].num += berth[boat[i].id].num;
+                berth[boat[i].id].num = 0;
+                berth[boat[i].id].value = 0;
+                while (!berth[boat[i].id].goodsList.empty())
+                    berth[boat[i].id].goodsList.pop();
+            } else if (boat_capacity - boat[i].num < berth[boat[i].id].velocity) {
+                int load_num = boat_capacity - boat[i].num;
+                boat[i].num = boat_capacity;
+                berth[boat[i].id].num -= load_num;
+                while (load_num > 0) {
+                    load_num--;
+                    berth[boat[i].id].value -= berth[boat[i].id].goodsList.front();
+                    berth[boat[i].id].goodsList.pop();
+                }
+            } else {
+                boat[i].num += berth[boat[i].id].velocity;
+                berth[boat[i].id].num -= berth[boat[i].id].velocity;
+                int load_num = berth[boat[i].id].velocity;
+                while (load_num > 0) {
+                    load_num--;
+                    berth[boat[i].id].value -= berth[boat[i].id].goodsList.front();
+                    berth[boat[i].id].goodsList.pop();
+                }
+            }
+            
+            // 如果我把这个港口装空了 我就找下一个
+            if (boat[i].id != -1 && !isBoatFull(i) && berth[boat[i].id].num == 0) {
+                if (boat_capacity - boat[i].num >= 7) {
+                    berth[boat[i].myLastBerth].flag = false;
+                    int berthID = getMaxValueBerthID();
+                    boat[i].ship(i, berthID);
+                    berth[berthID].flag = true;
+                    boat[i].shipedFrame = frameID + 500;
+                }
+            }
+        }
+    }
+}
+
+void boatActionFor2 (int frameID) {
     /* boat.status:
         0 : moving
         1 : finishing shipping OR waiting for loading
@@ -747,7 +840,10 @@ int main() {
         //     boatAction(frame_id);
         ppolite = true;
         if (start_flag)
-            boatAction(frame_id);
+            if (mmmap == 2)
+                boatActionFor2(frame_id);
+            else
+                boatAction(frame_id);
         else {
             for (int i = 0; i < B_SIZE; i++){
                 if (berth[i].num >= boat_capacity * eps) {
