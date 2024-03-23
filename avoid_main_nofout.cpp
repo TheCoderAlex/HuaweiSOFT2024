@@ -343,8 +343,10 @@ double goodsRatio(int value, int distance,int robot_id){
     //添加机器人的负载
     double load_coefficient = 0.5;
     double value_coefficient = 0.6;
-    if (mmmap == 1)
+    if (mmmap == 1){
         value_coefficient = 0.8;
+        load_coefficient = 0.7;
+    }
     //double distance_coefficient = 1.2;
 
     int load = robot[robot_id].myGoods.size() + 1;
@@ -839,19 +841,38 @@ int main() {
         // if (frame_id > 7000)
         //     boatAction(frame_id);
         ppolite = true;
-        if (start_flag)
-            if (mmmap == 2)
-                boatActionFor2(frame_id);
-            else
+
+        if (mmmap == 1) {
+            if (frame_id > 7000)
                 boatAction(frame_id);
-        else {
-            for (int i = 0; i < B_SIZE; i++){
-                if (berth[i].num >= boat_capacity * eps) {
-                    start_flag = true;
-                    break;
+        } else {
+            if (start_flag)
+                if (mmmap == 2)
+                    boatActionFor2(frame_id);
+                else
+                    boatAction(frame_id);
+            else {
+                for (int i = 0; i < B_SIZE; i++){
+                    if (berth[i].num >= boat_capacity * eps) {
+                        start_flag = true;
+                        break;
+                    }
                 }
             }
         }
+        // if (start_flag)
+        //     if (mmmap == 2)
+        //         boatActionFor2(frame_id);
+        //     else
+        //         boatAction(frame_id);
+        // else {
+        //     for (int i = 0; i < B_SIZE; i++){
+        //         if (berth[i].num >= boat_capacity * eps) {
+        //             start_flag = true;
+        //             break;
+        //         }
+        //     }
+        // }
 
         //新增的货物入队 集合到 Input 函数中了
         
