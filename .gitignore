@@ -9,3 +9,4 @@ out.txt
 # 忽略文件夹
 .idea/
 .vscode/
+replay/
