@@ -35,7 +35,7 @@ int dx[4] = {0, 1, -1, 0};
 int dy[4] = {-1, 0, 0, 1};
 string dir[4] = {"1", "3", "2", "0"};
 bool has_cracked[10];
-int choice[10] = {0,1,2,3,4,5,6,7,8,9};  //机器人的泊位选择
+int choice[10] = {0,1,2,3,4,8,9,6,5,7};  //机器人的泊位选择
 map<pair<int,int>,int> berthid;   //泊位坐标到id的映射
 ofstream fout("out.txt");
 
@@ -237,8 +237,9 @@ double goodsRatio(int value, int distance,int robot_id){
         // value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
         // distance_coefficient = 1;
         distance_coefficient = distance_coefficient - (distance_coefficient - 1) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2))) + robot[robot_id].waiting_frame;
     }
-    value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2)));
+    
 
     return value *  value_coefficient / (distance_coefficient * distance + load_coefficient * load);
 }
@@ -467,12 +468,14 @@ void boatAction (int frameID) {
             
             // 如果我把这个港口装空了 我就找下一个
             if (boat[i].id != -1 && !isBoatFull(i) && berth[boat[i].id].num == 0) {
-                berth[boat[i].myLastBerth].flag = false;
-                int berthID = getMaxGoodsBerthID();
-                boat[i].ship(i, berthID);
-                berth[berthID].flag = true;
-                boat[i].shipedFrame = frameID + 500;
-                fout << "Boat : " << i << "我装的还不够，去下一个: " << berthID << endl;
+                if (boat_capacity - boat[i].num >= 7 ) {
+                    berth[boat[i].myLastBerth].flag = false;
+                    int berthID = getMaxGoodsBerthID();
+                    boat[i].ship(i, berthID);
+                    berth[berthID].flag = true;
+                    boat[i].shipedFrame = frameID + 500;
+                    fout << "Boat : " << i << "我装的还不够，去下一个: " << berthID << endl;
+                }
             }
         }
     }
@@ -755,7 +758,7 @@ int main() {
 
             // 根据空闲帧数进行赋值
             if (robot[i].myGoods.empty()) {
-                robot[i].waiting_frame += 1;
+                robot[i].waiting_frame = 1;
             } else {
                 robot[i].waiting_frame = 0;
             }

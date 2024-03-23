@@ -184,15 +184,6 @@ struct Robot
     priority_queue<Goods> myGoods;
 }robot[10];
 
-/*
- * 优先队列用法
-    while (!pq.empty()) {
-        Item item = pq.top();
-        pq.pop();
-        std::cout << "Item value: " << item.value << std::endl;
-    }
-*/
-
 void Init()
 {
     for(int i = 0; i < M_SIZE; i ++)
@@ -417,20 +408,10 @@ void boatAction (int frameID) {
                 int load_num = boat_capacity - boat[i].num;
                 boat[i].num = boat_capacity;
                 berth[boat[i].id].num -= load_num;
-                while (load_num > 0) {
-                    load_num--;
-                    berth[boat[i].id].value -= berth[boat[i].id].goodsList.front();
-                    berth[boat[i].id].goodsList.pop();
-                }
             } else {
                 boat[i].num += berth[boat[i].id].velocity;
                 berth[boat[i].id].num -= berth[boat[i].id].velocity;
                 int load_num = berth[boat[i].id].velocity;
-                while (load_num > 0) {
-                    load_num--;
-                    berth[boat[i].id].value -= berth[boat[i].id].goodsList.front();
-                    berth[boat[i].id].goodsList.pop();
-                }
             }
             
             // 如果我把这个港口装空了 我就找下一个
@@ -594,34 +575,6 @@ int main() {
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   
-            // priority_queue<Goods> temp;
-            // //找到空闲的机器人就去分配货物
-            // while (!goods_queue.empty() && robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods) {
-            //     Goods tmp = goods_queue.top();
-            //     if (-60 <= tmp.x - robot[i].x && tmp.x - robot[i].x <= 60 && -60 <= tmp.y - robot[i].y && tmp.y - robot[i].y <=60) {
-            //         robot[i].myGoods.push(tmp);
-            //         goods_queue.pop();
-            //     } else {
-            //         temp.push(goods_queue.top());
-            //         goods_queue.pop();
-            //     }
-            // }
-            // while (!temp.empty()) {
-            //     goods_queue.push(temp.top());
-            //     temp.pop();
-            // }
-            // if (!robot[i].myGoods.empty()) {
-            //     while (frame_id - robot[i].myGoods.top().frame >= 1000) {
-            //         robot[i].myGoods.pop();
-            //     }
-            //     Goods tmp = robot[i].myGoods.top();
-            //     robot[i].myGoods.pop();
-            //     robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
-            //     robot[i].mbx = tmp.x;
-            //     robot[i].mby = tmp.y;
-            //     robot[i].goods_value = tmp.value;
-            //     robot[i].status = 1;
-            // }
             //当机器人空闲且没拿货物且货物列表不空的时候，直接从自己的队列里面取出下一个要去拿的货物
             if (robot[i].status == 0 && robot[i].st != 0 && !robot[i].has_goods && !robot[i].myGoods.empty()){
                 // 把前 1 个超时的货物 丢弃掉
@@ -632,10 +585,6 @@ int main() {
                 }
                 if (!robot[i].myGoods.empty()) { 
                     Goods tmp = robot[i].myGoods.top();
-                    // while(frame_id - tmp.frame > 1000 - sqrt(pow(abs(robot[i].x - tmp.x), 2) + pow(abs(robot[i].y - tmp.y), 2))){
-                    //     robot[i].myGoods.pop();
-                    //     tmp = robot[i].myGoods.top();
-                    // }
                     robot[i].myGoods.pop();
                     robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
                     robot[i].mbx = tmp.x;
@@ -681,18 +630,6 @@ int main() {
                     getGoods(i);
                 } 
             } else if (robot[i].status == 1 && robot[i].has_goods) {
-                //拿到货物去泊位
-                // int minLen = 1000000;
-                // vector<string> tmp;
-                // //泊位选择
-                // for(int j = 0; j < 10; j ++){
-                //     vector<string> one = BFS(robot[i].x, robot[i].y,berth[j].x,berth[j].y);
-                //     if(!one.empty() && one.size() < minLen){
-                //         minLen = one.size();
-                        
-                //         tmp = one;
-                //     }
-                // }
                 if (has_cracked[i] == 1) {
                     changeDirectionRandom(i, frame_id);
                     // changeDirection_turnAround(i, frame_id);
