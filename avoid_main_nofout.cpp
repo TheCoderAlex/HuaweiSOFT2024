@@ -39,6 +39,7 @@ int dy[4] = {-1, 0, 0, 1};
 string dir[4] = {"1", "3", "2", "0"};
 bool has_cracked[10];
 int choice[10] = {0,1,2,3,4,5,6,7,8,9};  //机器人的泊位选择
+int choicefor2[10] = {0,1,1,9,4,6,6,7,8,9};
 map<pair<int,int>,int> berthid;   //泊位坐标到id的映射
 ofstream fout("out.txt");
 
@@ -327,6 +328,12 @@ void Init()
         dijkstra(berth[i].x * 200 + berth[i].y);
         minlen[i] = dist;
     }
+
+    if (mmmap == 2) {
+        for (int i = 0;i < 10; ++i)
+            choice[i] = choicefor2[i];
+    }
+
     if (mmmap == 3)
         robotBerthChoose();
     // for (int i = 0; i < 10; ++i) {
@@ -360,8 +367,8 @@ double goodsRatio(int value, int distance,int robot_id){
     }
     if(distance <= p){
         // 时间价值系数计算
-        // value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
-        value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2)));
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
+        // value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2)));
         // distance_coefficient = 1;
         //distance_coefficient = distance_coefficient - (distance_coefficient - 1) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
 
@@ -370,11 +377,61 @@ double goodsRatio(int value, int distance,int robot_id){
     return value * value_coefficient / ((double) distance + load_coefficient * load);
 }
 
+void chooseRobotFor2(Goods goods){
+    double maxR = 0;
+    int maxRoboId = -1;
+    double threshold = 0.1;
+    // 遍历机器人
+    for(int i = 0; i < B_SIZE; i ++){
+
+        // 找到当前机器人对应的泊位
+        int berth_id = choice[i];
+        int berth_x = berth[berth_id].x, berth_y = berth[berth_id].y;
+        // 计算当前货物到这个泊点的曼哈顿距离
+        int dist = minlen[berth_id][goods.x * 200 + goods.y];
+        // 计算当前货物对于该泊点的性价比
+        double ratio = goodsRatio(goods.value, dist, i);
+        // 如果robot的货物队列中的货物太多了，这里是多于50，那么判断当前的货物价值是不是大于这个队列中的最大值，大于才入队，小于就不入
+        // if (robot[i].myGoods.size() >= 50 && robot[i].myGoods.top().ratio >= ratio )
+        //     continue;
+        if (ratio > maxR){
+            maxR = ratio;
+            maxRoboId = i;
+        }
+    }
+    int secondRobot = -1;
+
+    for (int i = 0; i < B_SIZE; ++i)
+    {
+        int berth_id = choice[i];
+        int berth_x = berth[berth_id].x, berth_y = berth[berth_id].y;
+        int dist = minlen[berth_id][goods.x * 200 + goods.y];
+        double ratio = goodsRatio(goods.value, dist, i);
+        if(ratio == maxR){
+            secondRobot = i;
+            break;
+        }
+    }
+     
+    if (maxR < threshold){
+        goods_ignore ++;
+    }else{
+        if (secondRobot != -1){
+            goods.ratio = maxR;
+            int c = rand() % 2;
+            if(c == 1)
+                robot[maxRoboId].myGoods.push(goods);
+            else
+                robot[secondRobot].myGoods.push(goods);
+        }   
+    }
+}
+
 // 为当前生成的货物寻找一个机器人
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0.001;
+    double threshold = 0.1;
     // 遍历机器人
     for(int i = 0; i < B_SIZE; i ++){
 
@@ -415,7 +472,10 @@ int Input()
         total_val += val;
         // goods_queue.push(goods);
         // 选择一个性价比最高的机器人，然后进入它的货物队列
-        chooseRobot(goods);
+        if (mmmap == 2)
+            chooseRobotFor2(goods);
+        else
+            chooseRobot(goods);
     }
     total_k += k;
     botIsHere.clear();
@@ -832,6 +892,9 @@ int main() {
     double eps = 0.6;
     if (mmmap == 1)
         eps = 0.8;
+    else if (mmmap == 2)
+        eps = 0.85;
+
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
         //第一帧以及每500帧操作一下船
