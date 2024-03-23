@@ -40,6 +40,7 @@ string dir[4] = {"1", "3", "2", "0"};
 bool has_cracked[10];
 int choice[10] = {0,1,2,3,4,5,6,7,8,9};  //机器人的泊位选择
 map<pair<int,int>,int> berthid;   //泊位坐标到id的映射
+ofstream fout("out.txt");
 
 bool isValid(int x, int y) {
     return x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && mp[x][y] != '#' && mp[x][y] != '*';
@@ -347,11 +348,11 @@ double goodsRatio(int value, int distance,int robot_id){
     // if (distance <= 0) return value * 1.0;
 
     //以距离为60为界限
-    int p = 70;
+    int p = 60;
     if(distance <= p){
         // 时间价值系数计算
-        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
-        // value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2))) + robot[robot_id].waiting_frame / 3;
+        // value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2)));
         // distance_coefficient = 1;
         //distance_coefficient = distance_coefficient - (distance_coefficient - 1) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
 
@@ -364,7 +365,7 @@ double goodsRatio(int value, int distance,int robot_id){
 void chooseRobot(Goods goods){
     double maxR = 0;
     int maxRoboId = -1;
-    double threshold = 0.1;
+    double threshold = 0.001;
     // 遍历机器人
     for(int i = 0; i < B_SIZE; i ++){
 
@@ -733,7 +734,7 @@ void changeDirection_turnAround(int rid, int frame) {
 int main() {
     Init();
     srand((unsigned)time(NULL));
-    double eps = 0.5;
+    double eps = 0.6;
     if (mmmap == 1)
         eps = 0.8;
     for(int frame = 1; frame <=15000; frame ++){
@@ -930,6 +931,10 @@ int main() {
             //     }
             // }
         }
+        fout << "----------" << endl;
+        fout << "?????total K is: " << total_k << "total value: " << total_val << endl;
+        fout << "?????We get total K is: " << total_berth_num << "total value: " << total_berth_value << endl;
+        fout << "----------" << endl;
         puts("OK");
         fflush(stdout);
     }
