@@ -182,6 +182,7 @@ struct Robot
     int wait;
     bool has_goods;
     int goods_value;
+    int good_dis;
     int status; //0 free 1 work 2 collision
     int st;
     int waiting_frame;
@@ -218,7 +219,7 @@ bool calc(int x, int y,int rid) {
     return (x >= 0 && x < M_SIZE && y >= 0 && y < M_SIZE && !bmap[xy2pos({x,y})] && (botIsHere[xy2pos({x,y})] == rid + 1 || (botIsHere[xy2pos({x,y})] == 0)));
 }
 
-int findNextStep(int startX, int startY, int endX, int endY, int rid) {
+int findNextStep(int startX, int startY, int endX, int endY, int rid, int &d) {
     queue<int> q;
     vis.reset();
     int parent[200][200];
@@ -230,10 +231,13 @@ int findNextStep(int startX, int startY, int endX, int endY, int rid) {
         q.pop();
         if (x == endX && y == endY) {
             int curX = x, curY = y;
+            int cnt = 0;
             while (parent[curX][curY] != xy2pos({startX,startY})) {
                 pair<int,int> t = pos2xy(parent[curX][curY]);
                 curX = t.first, curY = t.second;
+                cnt++;
             }
+            d = cnt;
             return xy2pos({curX,curY}) - xy2pos({startX,startY});
         }
 
@@ -512,7 +516,7 @@ void robot_move(int robot_id){
 }
 
 void robot_move_new(int robot_id){
-    int t = findNextStep(robot[robot_id].x,robot[robot_id].y,robot[robot_id].mbx,robot[robot_id].mby,robot_id);
+    int t = findNextStep(robot[robot_id].x,robot[robot_id].y,robot[robot_id].mbx,robot[robot_id].mby,robot_id,robot[robot_id].good_dis);
     if (t == 1){
         printf("move %d 0\n",robot_id);
     } //向右
@@ -678,14 +682,14 @@ int main() {
         //新增的货物入队 集合到 Input 函数中了
         
         for (int i = 0; i < 10; ++i) {
-            if (i == 3) continue;
+
             // 解决 谦让 问题
             if (frame_id == 1) {
                 robot[i].lastx = robot[i].x;
                 robot[i].lasty = robot[i].y;
-            } else if (frame_id % 20 == 0) { //
-                if (((robot[i].x - robot[i].lastx == 0 && (robot[i].y - robot[i].lasty == 0 || robot[i].y - robot[i].lasty == 1 || robot[i].y - robot[i].lasty == -1))
-                || (robot[i].y - robot[i].lasty == 0 && (robot[i].x - robot[i].lastx == 0 || robot[i].x - robot[i].lastx == 1 || robot[i].x - robot[i].lastx == -1)))) {
+            } else if (frame_id % 17 == 0) { //
+                if (((robot[i].x - robot[i].lastx == 0 && (robot[i].y - robot[i].lasty == 1 || robot[i].y - robot[i].lasty == -1))
+                || (robot[i].y - robot[i].lasty == 0 && (robot[i].x - robot[i].lastx == 1 || robot[i].x - robot[i].lastx == -1)))) {
                     robot[i].wait++;
                     fout << "Robot: " << i << " wait is " << robot[i].wait << endl;
                 }
@@ -711,7 +715,6 @@ int main() {
                 robot[i].waiting_frame = 0;
             }
 
-            // if (i == 3) continue;   
             if (robot[i].status == 0 && robot[i].st != 0 && robot[i].has_goods) {
                 robot[i].status = 1;
             }   
@@ -755,6 +758,10 @@ int main() {
             }
 
             if (robot[i].status == 1 && !robot[i].has_goods) {//在拿货物的路上
+                // 太远的货物 我不拿
+                if (robot[i].good_dis > 1000) {
+                    robot[i].status = 0;
+                }
                 //解决原地get
                 if (robot[i].dir == 0) {
                     robot[i].status = 0;
