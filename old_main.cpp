@@ -30,7 +30,7 @@ int dy[4] = {-1, 0, 0, 1};
 string dir[4] = {"1", "3", "2", "0"};
 bool has_cracked[10];
 ofstream fout("out.txt");
-int choice[10] = {0,1,2,3,4,5,6,7,8,9}; //机器人的泊位选择
+int choice[10] = {0,1,2,3,4,8,9,6,5,7}; //机器人的泊位选择
 map<pair<int,int>,int> berthid;   //泊位坐标到id的映射
 
 bool isValid(int x, int y) {

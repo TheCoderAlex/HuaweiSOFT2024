@@ -299,7 +299,7 @@ double goodsRatio(int value, int distance,int robot_id){
     int p = 30;
     if(distance <= p){
         // 时间价值系数计算
-        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
+        value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)))+ robot[robot_id].waiting_frame;
         // value_coefficient = value_coefficient + (1 - value_coefficient) * (sqrt(1 - pow(1 - (double) value / 200, 2))) + robot[robot_id].waiting_frame / 3;
         // distance_coefficient = 1;
         //distance_coefficient = distance_coefficient - (distance_coefficient - 1) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2)));
