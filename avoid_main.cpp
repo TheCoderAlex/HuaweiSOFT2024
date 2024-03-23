@@ -186,6 +186,7 @@ struct Robot
     int st;
     int waiting_frame;
     int dir; ////0去泊位 1去货物
+    int goods_frame;
     vector<string> directions;
     priority_queue<Goods> myGoods;
 }robot[10];
@@ -731,6 +732,7 @@ int main() {
                     // }
                     robot[i].myGoods.pop();
                     //robot[i].directions = BFS(robot[i].x,robot[i].y,tmp.x,tmp.y);
+                    robot[i].goods_frame = tmp.frame;
                     robot[i].mbx = tmp.x;
                     robot[i].mby = tmp.y;
                     robot[i].goods_value = tmp.value;
@@ -755,6 +757,12 @@ int main() {
 
             if (robot[i].status == 1 && !robot[i].has_goods) {//在拿货物的路上
                 //解决原地get
+                if (frame_id - robot[i].goods_frame > 1000) {
+                    robot[i].status = 0;
+                    robot[i].mbx = robot[i].mby = 0;
+                    continue;
+                }
+                
                 if (robot[i].dir == 0) {
                     robot[i].status = 0;
                     robot[i].mbx = robot[i].mby = 0;
