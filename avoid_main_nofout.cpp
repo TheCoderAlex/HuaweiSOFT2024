@@ -30,6 +30,7 @@ int goods_sum = 0;
 int goods_ignore = 0;
 bool ppolite = false;
 bool start_flag = false;
+int mmmap;
 
 // queue<pair<int, int>> goods_queue;
 
@@ -250,6 +251,54 @@ int findNextStep(int startX, int startY, int endX, int endY, int rid) {
     return -114514;
 }
 
+void robotBerthChoose() {
+    vector<bool> has_chosen(10,false);    //泊位是否已经被选过
+    int cnt = 0;
+    vector<int> number4robot;  //如果到不了任何泊位
+    for (int i = 0;i < 200; ++i) {
+        if (cnt == 10)  break;
+        for (int j  = 0;j < 200; ++j) {
+            //初始阶段没有提供机器人坐标
+            if (mp[i][j] == 'A') {
+                //对每个机器人遍历10个berth位置
+                int minLength = 0x3f3f3f3f, minID = -1;
+                for (int k = 0; k < 10; k++) {
+                    if (has_chosen[k])  continue;
+                    int l = minlen[k][i * 200 + j];
+                    //cerr << "Robot: " << cnt << " to berth " << k << " distance is: " << l << endl;
+                    if (l == INF)   continue;
+                    if (l < minLength) {
+                        minID = k;
+                        minLength = l;
+                    }
+                }
+                //单独处理一下四号机器人
+                if (minLength == 0x3f3f3f3f) {
+                    number4robot.push_back(cnt++);
+                    continue;
+                }
+                choice[cnt++] = minID;
+                has_chosen[minID] = 1;
+            }
+            if (cnt == 10)  break; 
+        }
+    }
+    if (!number4robot.empty()) {
+        for (int i = 0; i < 10; i++)
+            if (has_chosen[i] == false) {
+                choice[number4robot.back()] = i;
+                number4robot.pop_back();
+                has_chosen[i] = true;
+            }
+    }
+
+    //for debug
+    // for (int i = 0;i < 10; i++) {
+    //     assert(has_chosen[i] == true);
+    // }
+
+}
+
 void Init()
 {
     for(int i = 0; i < M_SIZE; i ++){
@@ -258,7 +307,11 @@ void Init()
             bmap[xy2pos({i,j})] = (mp[i][j] == '#' || mp[i][j] == '*');
         }
     }
-        
+    if (mp[0][0] == '*')
+        mmmap = 1;
+    else
+        mmmap = 2;
+
     for(int i = 0; i < B_SIZE; i ++)
     {
         int id;
@@ -272,6 +325,10 @@ void Init()
         dijkstra(berth[i].x * 200 + berth[i].y);
         minlen[i] = dist;
     }
+    robotBerthChoose();
+    // for (int i = 0; i < 10; ++i) {
+    //     cerr << choice[i] << ' ';
+    // }
 
     char okk[100];
     scanf("%s", okk);
@@ -290,7 +347,7 @@ double goodsRatio(int value, int distance,int robot_id){
     // if (distance <= 0) return value * 1.0;
 
     //以距离为60为界限
-    int p = 30;
+    int p = 70;
     if(distance <= p){
         // 时间价值系数计算
         value_coefficient = value_coefficient + (1 - value_coefficient) * (1 - sqrt(1 - pow(1 - (double) distance / p, 2))); //+ robot[robot_id].waiting_frame;
@@ -302,7 +359,6 @@ double goodsRatio(int value, int distance,int robot_id){
 
     return value * value_coefficient / ((double) distance + load_coefficient * load);
 }
-
 
 // 为当前生成的货物寻找一个机器人
 void chooseRobot(Goods goods){
@@ -335,6 +391,7 @@ void chooseRobot(Goods goods){
     }
 }
 
+
 int Input()
 {
     scanf("%d%d", &frame_id, &money);
@@ -356,10 +413,12 @@ int Input()
     {
         scanf("%d%d%d%d", &robot[i].has_goods, &robot[i].x, &robot[i].y, &robot[i].st);
         botIsHere[xy2pos({robot[i].x,robot[i].y})] = i + 1;
-        if (robot[i].x >= 1) botIsHere[xy2pos({robot[i].x - 1,robot[i].y})] = i + 1;
-        if (robot[i].x < N - 1) botIsHere[xy2pos({robot[i].x + 1,robot[i].y})] = i + 1;
-        if (robot[i].y >= 1) botIsHere[xy2pos({robot[i].x,robot[i].y - 1 })] = i + 1;
-        if (robot[i].y < N - 1) botIsHere[xy2pos({robot[i].x,robot[i].y + 1})] = i + 1;
+        if (mmmap == 2) {
+            if (robot[i].x >= 1) botIsHere[xy2pos({robot[i].x - 1,robot[i].y})] = i + 1;
+            if (robot[i].x < N - 1) botIsHere[xy2pos({robot[i].x + 1,robot[i].y})] = i + 1;
+            if (robot[i].y >= 1) botIsHere[xy2pos({robot[i].x,robot[i].y - 1 })] = i + 1;
+            if (robot[i].y < N - 1) botIsHere[xy2pos({robot[i].x,robot[i].y + 1})] = i + 1;
+        }
     }
     for(int i = 0; i < 5; i ++)
         scanf("%d%d\n", &boat[i].status, &boat[i].id);
@@ -510,7 +569,7 @@ void robot_move(int robot_id){
     return;
 }
 
-void robot_move_new(int robot_id){
+void robot_move_new_for_2(int robot_id) {
     int t = findNextStep(robot[robot_id].x,robot[robot_id].y,robot[robot_id].mbx,robot[robot_id].mby,robot_id);
     if (t == 1){
         printf("move %d 0\n",robot_id);
@@ -523,6 +582,28 @@ void robot_move_new(int robot_id){
     }  //向下
     else if (t == -200) {
         printf("move %d 2\n",robot_id);
+    } //向上
+    //出问题的话就原地呆着
+    return;
+}
+
+void robot_move_new_for_1(int robot_id){
+    int t = findNextStep(robot[robot_id].x,robot[robot_id].y,robot[robot_id].mbx,robot[robot_id].mby,robot_id);
+    if (t == 1){
+        printf("move %d 0\n",robot_id);
+        botIsHere[xy2pos({robot[robot_id].x,robot[robot_id].y}) + 1] = robot_id + 1;
+    } //向右
+    else if (t == -1) {
+        printf("move %d 1\n",robot_id);
+        botIsHere[xy2pos({robot[robot_id].x,robot[robot_id].y}) - 1] = robot_id + 1;
+    } //向左
+    else if (t == 200) {
+        printf("move %d 3\n",robot_id);
+        botIsHere[xy2pos({robot[robot_id].x,robot[robot_id].y}) + 200] = robot_id + 1;
+    }  //向下
+    else if (t == -200) {
+        printf("move %d 2\n",robot_id);
+        botIsHere[xy2pos({robot[robot_id].x,robot[robot_id].y}) - 200] = robot_id + 1;
     } //向上
     //出问题的话就原地呆着
     return;
@@ -652,6 +733,9 @@ void changeDirection_turnAround(int rid, int frame) {
 int main() {
     Init();
     srand((unsigned)time(NULL));
+    double eps = 0.5;
+    if (mmmap == 1)
+        eps = 0.8;
     for(int frame = 1; frame <=15000; frame ++){
         int frame_id = Input();
         //第一帧以及每500帧操作一下船
@@ -666,7 +750,7 @@ int main() {
             boatAction(frame_id);
         else {
             for (int i = 0; i < B_SIZE; i++){
-                if (berth[i].num >= boat_capacity * 0.5) {
+                if (berth[i].num >= boat_capacity * eps) {
                     start_flag = true;
                     break;
                 }
@@ -773,7 +857,10 @@ int main() {
                 }
                 //刚才发生了碰撞
                 //cout  << "move: " << i << ' ' << robot[i].x << ' ' << robot[i].y << endl;
-                robot_move_new(i);
+                if (mmmap == 1)
+                    robot_move_new_for_1(i);
+                else
+                    robot_move_new_for_2(i);
 
                 //点位重合则get
                 //cout << robot[i].x << " " << robot[i].y << " " << robot[i].mbx << ' ' << robot[i].mby << endl;
@@ -791,7 +878,10 @@ int main() {
                     robot[i].status = 0;
                     continue;
                 }
-                robot_move_new(i);
+                if (mmmap == 1)
+                    robot_move_new_for_1(i);
+                else
+                    robot_move_new_for_2(i);
             }
 
             // if (robot[i].status == 1 && !robot[i].has_goods) {
